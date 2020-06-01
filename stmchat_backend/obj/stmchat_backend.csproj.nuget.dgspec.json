@@ -1,28 +1,30 @@
 {
   "format": 1,
   "restore": {
-    "E:\\NetProject\\stmchat_backend\\stmchat_backend\\stmchat_backend.csproj": {}
+    "D:\\stmchat_backend\\stmchat_backend\\stmchat_backend\\stmchat_backend.csproj": {}
   },
   "projects": {
-    "E:\\NetProject\\stmchat_backend\\stmchat_backend\\stmchat_backend.csproj": {
+    "D:\\stmchat_backend\\stmchat_backend\\stmchat_backend\\stmchat_backend.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "E:\\NetProject\\stmchat_backend\\stmchat_backend\\stmchat_backend.csproj",
+        "projectUniqueName": "D:\\stmchat_backend\\stmchat_backend\\stmchat_backend\\stmchat_backend.csproj",
         "projectName": "stmchat_backend",
-        "projectPath": "E:\\NetProject\\stmchat_backend\\stmchat_backend\\stmchat_backend.csproj",
-        "packagesPath": "C:\\Users\\zhuo\\.nuget\\packages\\",
-        "outputPath": "E:\\NetProject\\stmchat_backend\\stmchat_backend\\obj\\",
+        "projectPath": "D:\\stmchat_backend\\stmchat_backend\\stmchat_backend\\stmchat_backend.csproj",
+        "packagesPath": "C:\\Users\\liupangx\\.nuget\\packages\\",
+        "outputPath": "D:\\stmchat_backend\\stmchat_backend\\stmchat_backend\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
         ],
         "configFilePaths": [
-          "C:\\Users\\zhuo\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\liupangx\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
           "netcoreapp3.0"
         ],
         "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -39,11 +41,23 @@
       "frameworks": {
         "netcoreapp3.0": {
           "dependencies": {
+            "IdentityServer4.AccessTokenValidation": {
+              "target": "Package",
+              "version": "[3.0.1, )"
+            },
+            "IdentityServer4.AspNetIdentity": {
+              "target": "Package",
+              "version": "[3.0.2, )"
+            },
             "MongoDB.Driver": {
               "target": "Package",
               "version": "[2.10.4, )"
             },
             "MongoDB.Driver.Core": {
+              "target": "Package",
+              "version": "[2.10.4, )"
+            },
+            "MongoDB.Driver.GridFs": {
               "target": "Package",
               "version": "[2.10.4, )"
             }
@@ -58,24 +72,6 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
-          "downloadDependencies": [
-            {
-              "name": "Microsoft.AspNetCore.App.Ref",
-              "version": "[3.0.1, 3.0.1]"
-            },
-            {
-              "name": "Microsoft.NETCore.App.Host.win-x64",
-              "version": "[3.0.2, 3.0.2]"
-            },
-            {
-              "name": "Microsoft.NETCore.App.Ref",
-              "version": "[3.0.0, 3.0.0]"
-            },
-            {
-              "name": "Microsoft.WindowsDesktop.App.Ref",
-              "version": "[3.0.0, 3.0.0]"
-            }
-          ],
           "frameworkReferences": {
             "Microsoft.AspNetCore.App": {
               "privateAssets": "none"
@@ -84,7 +80,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\3.1.101\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\3.0.101\\RuntimeIdentifierGraph.json"
         }
       }
     }
