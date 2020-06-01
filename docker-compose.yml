@@ -1,0 +1,28 @@
+version: '3'
+
+services:
+  stmchat_backend:
+    image: stmchat_backend
+    restart: always
+    build:
+      context: "."
+      dockerfile: "backend.Dockerfile"
+    networks:
+      - stmchat
+
+  stmchat_mongo:
+    image: mongo:latest
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: ExaMp1ePa55w02d
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - stmchat
+
+volumes:
+  mongo_data:
+
+networks:
+  stmchat:
