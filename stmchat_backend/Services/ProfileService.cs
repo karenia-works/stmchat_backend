@@ -2,6 +2,7 @@ using System;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using stmchat_backend.Models;
 using stmchat_backend.Models.Settings;
@@ -30,7 +31,15 @@ namespace stmchat_backend.Services
                 .OrderBy(p => p.Username)
                 .ToListAsync();
         }
-        
+
+        public async Task<Profile> GetProfileByUsername(string username)
+        {
+            return await _profile
+                .AsQueryable()
+                .Where(p => p.Username == username)
+                .FirstOrDefaultAsync();
+        }
+
         // TODO: more actions
     }
 }

@@ -6,17 +6,15 @@ using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 using System.Linq;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Authorization;
 using System.Threading.Tasks;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
 using stmchat_backend.Models;
 using stmchat_backend.Services;
 
 
 namespace stmchat_backend.Controllers
 {
-    [Produces("application/json")]
     [Route("api/v1/[controller]")]
     [ApiController]
     class ProfileController : ControllerBase
@@ -28,18 +26,24 @@ namespace stmchat_backend.Controllers
             _service = service;
         }
 
+        // 可能会因为用户名叫`me`而出错
         [HttpGet("me")]
-        public async Task<Profile> Get()
+        public async Task<IActionResult> Get()
         {
-            // TODO: impl it
-            return null;
+            // TODO: impl it after id4 set
+            return Ok(_service.GetProfileList());
         }
-        
+
         [HttpGet("{username}")]
-        public async Task<Profile> Get(string username)
+        public async Task<IActionResult> Get(string username)
         {
-            // TODO: impl it
-            return null;
+            var res = await _service.GetProfileByUsername(username);
+            if (res == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(res);
         }
     }
 }
