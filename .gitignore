@@ -155,5 +155,3 @@ riderModule.iml
 .idea/
 
 # User Modified
-data/*
-!data/.gitkeep
