@@ -12,11 +12,12 @@ namespace stmchat_backend.Models
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        public string Id { set; get; }
+        public ObjectId Id { set; get; }
 
         public string Email { set; get; }
         public string Username { set; get; }
-
         public string AvatarUrl { set; get; }
+        public List<string> Friends { set; get; }
+        public List<string> Groups { set; get; }
     }
 }
