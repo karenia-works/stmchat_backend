@@ -19,7 +19,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using stmchat_backend.Models.Settings;
 using stmchat_backend.Services;
-using stmchat_backend.
+using stmchat_backend.Store;
 
 namespace stmchat_backend
 {
@@ -35,11 +35,12 @@ namespace stmchat_backend
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            // ID4
             services.AddIdentityServer()
                 .AddDeveloperSigningCredential()
-                .AddInMemoryClients(config.GetClients())
-                .AddInMemoryApiResources(config.GetApiResources()).AddResourceOwnerValidator<UserStore>();
-            services.AddControllers();
+                .AddInMemoryClients(Config.GetClients())
+                .AddInMemoryApiResources(Config.GetApiResources()).AddResourceOwnerValidator<UserStore>();
+
             // DB
             services.Configure<DbSettings>(
                 Configuration.GetSection(nameof(DbSettings))
@@ -50,8 +51,6 @@ namespace stmchat_backend
 
             // Service
             services.AddSingleton<ProfileService>();
-
-            // TODO: ID4 
 
             // Web service
             services.AddSingleton<ICorsPolicyService>(
