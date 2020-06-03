@@ -8,10 +8,25 @@ namespace stmchat_backend.Models
 {
     public class Message
     {
-        public string _t { get; set; }
-        public DateTime Time { get; set; }
-        [BsonId] public string FromId { get; set; }
-        public string FromName { get; set; }
-        public string Content { get; set; }
+        public DateTime time { get; set; }
+        public string sender { get; set; }
+        [BsonId]
+        public string id { get; set; }
+
+    }
+    public class TextMsg : Message
+    {
+        public string text { get; set; }
+    }
+    public class FileMsg : Message
+    {
+        public string file { get; set; }
+        public string filename { get; set; }
+        public string caption { get; set; }
+    }
+    public class ImageMsg : Message
+    {
+        public string image { get; set; }
+        public string caption { get; set; }
     }
 }

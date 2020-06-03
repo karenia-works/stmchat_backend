@@ -51,7 +51,7 @@ namespace stmchat_backend
 
             // Service
             services.AddSingleton<ProfileService>();
-
+            services.AddSingleton<UserService>();
             // Web service
             services.AddSingleton<ICorsPolicyService>(
                 new DefaultCorsPolicyService(
@@ -78,8 +78,10 @@ namespace stmchat_backend
             }
 
             app.UseRouting();
+            app.UseIdentityServer();
             app.UseAuthentication();
             app.UseAuthorization();
+
             app.UseCors(policy =>
             {
                 policy.AllowAnyHeader()

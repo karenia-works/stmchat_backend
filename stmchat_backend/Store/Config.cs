@@ -39,7 +39,7 @@ namespace stmchat_backend.Store
             return new List<ApiResource>
             {
                 new ApiResource(IdentityServerConstants.LocalApi.ScopeName, "identityapi",
-                    new string[] {"Name", "Role"})
+                    new string[] {"Name"})
             };
         }
 
