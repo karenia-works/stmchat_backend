@@ -1,11 +1,10 @@
-//登录验证相关，这个刘子暄搞
-
 using System;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using System.Security.Cryptography;
 using System.Text;
 
+//登录验证相关，这个刘子暄搞
 namespace stmchat_backend.Models
 {
     public class User
@@ -22,17 +21,17 @@ namespace stmchat_backend.Models
         {
             var key = new byte[32];
             RandomNumberGenerator.Fill(key);
-            var hashed = new HMACSHA256(key).ComputeHash(new UTF8Encoding().GetBytes(this.Password));
-            this.Password = System.Convert.ToBase64String(hashed);
-            this.Key = System.Convert.ToBase64String(key);
+            var hashed = new HMACSHA256(key).ComputeHash(new UTF8Encoding().GetBytes(Password));
+            Password = Convert.ToBase64String(hashed);
+            Key = Convert.ToBase64String(key);
         }
 
         public bool CheckPassword(string incoming)
         {
-            var key = System.Convert.FromBase64String(this.Key);
+            var key = Convert.FromBase64String(Key);
             var hashed = new HMACSHA256(key).ComputeHash(new UTF8Encoding().GetBytes(incoming));
-            var realPassword = System.Convert.FromBase64String(this.Password);
-            Console.WriteLine(System.Convert.ToBase64String(hashed));
+            var realPassword = Convert.FromBase64String(Password);
+            Console.WriteLine(Convert.ToBase64String(hashed));
             return SlowByteEq(realPassword, hashed);
         }
 

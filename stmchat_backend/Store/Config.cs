@@ -26,7 +26,7 @@ namespace stmchat_backend.Store
                     {
                         new Secret("client".Sha256())
                     },
-                    AllowedScopes = new[] {IdentityServer4.IdentityServerConstants.LocalApi.ScopeName},
+                    AllowedScopes = new[] {IdentityServerConstants.LocalApi.ScopeName},
                     // AllowedCorsOrigins=new[]{"*"}
                     AccessTokenLifetime = 3600 * 24,
                     RefreshTokenUsage = TokenUsage.ReUse
@@ -34,12 +34,11 @@ namespace stmchat_backend.Store
             };
         }
 
-
         public static IEnumerable<ApiResource> GetApiResources()
         {
             return new List<ApiResource>
             {
-                new ApiResource(IdentityServer4.IdentityServerConstants.LocalApi.ScopeName, "identityapi",
+                new ApiResource(IdentityServerConstants.LocalApi.ScopeName, "identityapi",
                     new string[] {"Name", "Role"})
             };
         }

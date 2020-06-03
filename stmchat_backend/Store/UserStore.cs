@@ -12,16 +12,16 @@ namespace stmchat_backend.Store
 {
     public class UserStore : IResourceOwnerPasswordValidator
     {
-        public UserService _userservice { get; set; }
+        private readonly UserService _userService;
 
         public UserStore(UserService userService)
         {
-            _userservice = userService;
+            _userService = userService;
         }
 
         public async Task ValidateAsync(ResourceOwnerPasswordValidationContext context)
         {
-            var result = await _userservice.findUser(context.UserName);
+            var result = await _userService.findUser(context.UserName);
             if (result == null || !result.CheckPassword(context.Password))
             {
                 context.Result = new GrantValidationResult(
@@ -32,9 +32,9 @@ namespace stmchat_backend.Store
             else
             {
                 context.Result = new GrantValidationResult(
-                    subject: result.Id,
-                    authenticationMethod: "custom",
-                    claims: new Claim[]
+                    result.Id,
+                    "custom",
+                    new Claim[]
                     {
                         new Claim("id", result.Id),
                         new Claim("Name", result.Username),
