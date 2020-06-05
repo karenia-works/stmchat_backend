@@ -6,35 +6,38 @@ using System.Text;
 using Dahomey.Json;
 using Dahomey.Json.Attributes;
 using System.Text.Json;
+
 namespace stmchat_backend.Models
 {
     public class Message
     {
-        public DateTime time { get; set; }
-        public string sender { get; set; }
+        public DateTime Time { get; set; }
+        public string Sender { get; set; }
+
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        public string id { get; set; }
-
+        public string Id { get; set; }
     }
+
     [JsonDiscriminator("text")]
     public class TextMsg : Message
     {
-        public string text { get; set; }
+        public string Text { get; set; }
     }
+
     [JsonDiscriminator("file")]
     public class FileMsg : Message
     {
-        public string file { get; set; }
-        public string filename { get; set; }
-        public int size { get; set; }
-        public string caption { get; set; }
+        public string File { get; set; }
+        public string Filename { get; set; }
+        public int Size { get; set; }
+        public string Caption { get; set; }
     }
+
     [JsonDiscriminator("image")]
     public class ImageMsg : Message
     {
-        public string image { get; set; }
-        public string caption { get; set; }
+        public string Image { get; set; }
+        public string Caption { get; set; }
     }
-
 }

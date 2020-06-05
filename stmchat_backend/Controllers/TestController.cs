@@ -28,10 +28,10 @@ namespace stmchat_backend.Controllers
         {
 
             var test = new TextMsg();
-            test.id = "11";
-            test.sender = "sss";
-            test.text = "ddd";
-            test.time = new DateTime();
+            test.Id = "11";
+            test.Sender = "sss";
+            test.Text = "ddd";
+            test.Time = new DateTime();
             return "o~~k";
         }
 

@@ -21,7 +21,7 @@ namespace stmchat_backend.Store
 
         public async Task ValidateAsync(ResourceOwnerPasswordValidationContext context)
         {
-            var result = await _userService.findUser(context.UserName);
+            var result = await _userService.FindUser(context.UserName);
             if (result == null || !result.CheckPassword(context.Password))
             {
                 context.Result = new GrantValidationResult(
