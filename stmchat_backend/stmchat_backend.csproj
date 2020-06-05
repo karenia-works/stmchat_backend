@@ -13,6 +13,7 @@
 
         <PackageReference Include="IdentityServer4.AspNetIdentity" Version="3.0.2" />
         <PackageReference Include="IdentityServer4.AccessTokenValidation" Version="3.0.1" />
+        <PackageReference Include="System.Reactive" Version="4.4.1" />
 
     </ItemGroup>
 
