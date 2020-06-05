@@ -11,7 +11,8 @@ using Microsoft.AspNetCore.Mvc;
 using IdentityServer4;
 using IdentityServer4.Models;
 using IdentityServer4.Stores;
-using IdentityServer4.Services;
+using Dahomey.Json;
+using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -20,7 +21,8 @@ using Microsoft.Extensions.Options;
 using stmchat_backend.Models.Settings;
 using stmchat_backend.Services;
 using stmchat_backend.Store;
-
+using stmchat_backend.Models;
+using Dahomey.Json.Serialization.Conventions;
 namespace stmchat_backend
 {
     public class Startup
@@ -35,6 +37,9 @@ namespace stmchat_backend
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+
+
+
             // ID4
             services.AddIdentityServer()
                 .AddDeveloperSigningCredential()
@@ -65,8 +70,20 @@ namespace stmchat_backend
                 o.MemoryBufferThreshold = int.MaxValue;
             });
             services.AddRouting(options => { options.LowercaseUrls = true; });
+
             services.AddControllers()
-                .AddNewtonsoftJson(options => options.UseMemberCasing());
+                //.AddNewtonsoftJson(options => options.UseMemberCasing())
+                .AddJsonOptions(option =>
+                {
+                    option.JsonSerializerOptions.SetupExtensions();
+                    DiscriminatorConventionRegistry registry = option.JsonSerializerOptions.GetDiscriminatorConventionRegistry();
+                    registry.ClearConventions();
+                    registry.RegisterConvention(new DefaultDiscriminatorConvention<string>(option.JsonSerializerOptions, "_t"));
+                    registry.RegisterType<TextMsg>();
+                    registry.RegisterType<FileMsg>();
+                    registry.RegisterType<ImageMsg>();
+                    registry.DiscriminatorPolicy = DiscriminatorPolicy.Always;
+                });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -81,7 +98,6 @@ namespace stmchat_backend
             app.UseIdentityServer();
             app.UseAuthentication();
             app.UseAuthorization();
-
             app.UseCors(policy =>
             {
                 policy.AllowAnyHeader()
