@@ -81,14 +81,7 @@ namespace stmchat_backend
                 //.AddNewtonsoftJson(options => options.UseMemberCasing())
                 .AddJsonOptions(option =>
                 {
-                    option.JsonSerializerOptions.SetupExtensions();
-                    DiscriminatorConventionRegistry registry = option.JsonSerializerOptions.GetDiscriminatorConventionRegistry();
-                    registry.ClearConventions();
-                    registry.RegisterConvention(new DefaultDiscriminatorConvention<string>(option.JsonSerializerOptions, "_t"));
-                    registry.RegisterType<TextMsg>();
-                    registry.RegisterType<FileMsg>();
-                    registry.RegisterType<ImageMsg>();
-                    registry.DiscriminatorPolicy = DiscriminatorPolicy.Always;
+                    ConfigJsonOptions(option.JsonSerializerOptions);
                 });
         }
 
@@ -129,10 +122,18 @@ namespace stmchat_backend
                 }
 
             });
-
-            app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
         }
 
+        public static void ConfigJsonOptions(JsonSerializerOptions options)
+        {
+            options.SetupExtensions();
+            DiscriminatorConventionRegistry registry = options.GetDiscriminatorConventionRegistry();
+            registry.ClearConventions();
+            registry.RegisterConvention(new DefaultDiscriminatorConvention<string>(options, "_t"));
+            registry.RegisterType<TextMsg>();
+            registry.RegisterType<FileMsg>();
+            registry.RegisterType<ImageMsg>();
+            registry.DiscriminatorPolicy = DiscriminatorPolicy.Always;
+        }
     }
 }
-
