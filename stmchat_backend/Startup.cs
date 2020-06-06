@@ -22,7 +22,13 @@ using stmchat_backend.Models.Settings;
 using stmchat_backend.Services;
 using stmchat_backend.Store;
 using stmchat_backend.Models;
+using System.Net.WebSockets;
+using System.Threading;
+
 using Dahomey.Json.Serialization.Conventions;
+using stmchat_backend.Helpers;
+using stmchat_backend.Controllers;
+using Microsoft.AspNetCore.Http;
 namespace stmchat_backend
 {
     public class Startup
@@ -89,22 +95,44 @@ namespace stmchat_backend
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
 
             app.UseRouting();
-            app.UseIdentityServer();
-            app.UseAuthentication();
-            app.UseAuthorization();
+            // app.UseIdentityServer();
+            // app.UseAuthentication();
+            // app.UseAuthorization();
             app.UseCors(policy =>
             {
                 policy.AllowAnyHeader()
                     .AllowAnyMethod()
-                    .AllowAnyOrigin();
+                    .WithOrigins(new[] { "https://postwoman.io" });
             });
+            var webSocketOptions = new WebSocketOptions();
+            webSocketOptions.AllowedOrigins.Add("https://postwoman.io");
+            app.UseWebSockets(webSocketOptions);
+            app.Use(async (context, next) =>
+            {
+                if (context.Request.Path == "/ws" || context.WebSockets.IsWebSocketRequest)
+                {
+                    var websocket = await context.WebSockets.AcceptWebSocketAsync();
+                    TestController.Addsocket(websocket);
+
+                }
+                else
+                {
+
+                    await next();
+                }
+
+            });
+
             app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
         }
+
     }
 }
+

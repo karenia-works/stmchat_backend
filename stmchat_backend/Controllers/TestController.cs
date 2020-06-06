@@ -15,6 +15,8 @@ using Dahomey.Json;
 using System.Text.Json;
 using Dahomey.Json.Serialization.Conventions;
 using Dahomey.Json.Attributes;
+using stmchat_backend.Helpers;
+using System.Net.WebSockets;
 namespace stmchat_backend.Controllers
 {
     [Route("/api/v1/test")]
@@ -22,17 +24,28 @@ namespace stmchat_backend.Controllers
 
     public class TestController : ControllerBase
     {
+
+        public static List<JsonWebsocketWrapper<string, string>> testsockets = new List<JsonWebsocketWrapper<string, string>>();
+        public static async void Addsocket(WebSocket webSocket)
+        {
+            Console.WriteLine("make");
+            var tgt = new JsonWebsocketWrapper<string, string>(webSocket);
+            testsockets.Add(tgt);
+            await tgt.Messages.Subscribe()
+
+
+
+        }
         [HttpGet("test")]
 
-        public string jsontest()
+        public async Task<string> jsontest()
         {
 
-            var test = new TextMsg();
-            test.id = "11";
-            test.sender = "sss";
-            test.text = "ddd";
-            test.time = new DateTime();
-            return "o~~k";
+            foreach (var socket in testsockets)
+            {
+                await socket.SendMessage("fuck");
+            }
+            return "ok";
         }
 
         [HttpGet]
