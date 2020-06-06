@@ -53,6 +53,7 @@ namespace stmchat_backend.Helpers
                         writtenBytes,
                         this.recvBuffer.Length - writtenBytes), this.closeToken);
                 }
+                writtenBytes += result.Count;
 
                 switch (result.MessageType)
                 {
