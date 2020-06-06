@@ -8,11 +8,11 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace stmchat_backend.Models
 {
-    class Profile
+    public class Profile
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        public ObjectId Id { set; get; }
+        public string Id { set; get; }
 
         public string Email { set; get; }
         public string Username { set; get; }

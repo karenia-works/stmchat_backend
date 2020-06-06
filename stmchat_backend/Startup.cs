@@ -39,9 +39,6 @@ namespace stmchat_backend
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
-
-
             // ID4
             services.AddIdentityServer()
                 .AddDeveloperSigningCredential()
@@ -56,9 +53,11 @@ namespace stmchat_backend
                 setting => setting.GetRequiredService<IOptions<DbSettings>>().Value
             );
 
-            // Service
+            // Singleton Service
+            services.AddSingleton<GroupService>();
             services.AddSingleton<ProfileService>();
             services.AddSingleton<UserService>();
+
             // Web service
             services.AddSingleton<ICorsPolicyService>(
                 new DefaultCorsPolicyService(
@@ -74,11 +73,7 @@ namespace stmchat_backend
             services.AddRouting(options => { options.LowercaseUrls = true; });
 
             services.AddControllers()
-                //.AddNewtonsoftJson(options => options.UseMemberCasing())
-                .AddJsonOptions(option =>
-                {
-                    ConfigJsonOptions(option.JsonSerializerOptions);
-                });
+                .AddJsonOptions(option => { ConfigJsonOptions(option.JsonSerializerOptions); });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -113,15 +108,16 @@ namespace stmchat_backend
                         ConfigJsonOptions(jsonConfig);
                         var socketWrapper = new JsonWebsocketWrapper<Message, Message>(socket, jsonConfig);
                         socketWrapper.Messages.Subscribe(
-                            (msg) => { Console.WriteLine("recv: {0}", msg); },
-                            (err) => { Console.WriteLine("err: {0}", err); },
+                            (msg) => { Console.WriteLine($"recv: {msg}"); },
+                            (err) => { Console.WriteLine($"err: {err}"); },
                             () => { Console.WriteLine("Completed"); });
                         await socketWrapper.WaitUntilClose();
                     }
                     else
                     {
                         ctx.Response.StatusCode = 400;
-                        await ctx.Response.Body.WriteAsync(System.Text.Encoding.UTF8.GetBytes("Not a websocket request!"));
+                        await ctx.Response.Body.WriteAsync(
+                            System.Text.Encoding.UTF8.GetBytes("Not a websocket request!"));
                     }
                 }
                 else
