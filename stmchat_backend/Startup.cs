@@ -22,6 +22,7 @@ using stmchat_backend.Models.Settings;
 using stmchat_backend.Services;
 using stmchat_backend.Store;
 using stmchat_backend.Models;
+using stmchat_backend.Helpers;
 using Dahomey.Json.Serialization.Conventions;
 
 namespace stmchat_backend
@@ -72,19 +73,7 @@ namespace stmchat_backend
             services.AddRouting(options => { options.LowercaseUrls = true; });
 
             services.AddControllers()
-                .AddJsonOptions(option =>
-                {
-                    option.JsonSerializerOptions.SetupExtensions();
-                    DiscriminatorConventionRegistry registry =
-                        option.JsonSerializerOptions.GetDiscriminatorConventionRegistry();
-                    registry.ClearConventions();
-                    registry.RegisterConvention(
-                        new DefaultDiscriminatorConvention<string>(option.JsonSerializerOptions, "_t"));
-                    registry.RegisterType<TextMsg>();
-                    registry.RegisterType<FileMsg>();
-                    registry.RegisterType<ImageMsg>();
-                    registry.DiscriminatorPolicy = DiscriminatorPolicy.Always;
-                });
+                .AddJsonOptions(option => { ConfigJsonOptions(option.JsonSerializerOptions); });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -96,6 +85,8 @@ namespace stmchat_backend
             }
 
             app.UseRouting();
+            app.UseWebSockets();
+
             app.UseIdentityServer();
             app.UseAuthentication();
             app.UseAuthorization();
@@ -105,7 +96,49 @@ namespace stmchat_backend
                     .AllowAnyMethod()
                     .AllowAnyOrigin();
             });
+
+            app.Use(async (ctx, next) =>
+            {
+                if (ctx.Request.Path == "/ws")
+                {
+                    if (ctx.WebSockets.IsWebSocketRequest)
+                    {
+                        var socket = await ctx.WebSockets.AcceptWebSocketAsync();
+                        var jsonConfig = new JsonSerializerOptions();
+                        ConfigJsonOptions(jsonConfig);
+                        var socketWrapper = new JsonWebsocketWrapper<Message, Message>(socket, jsonConfig);
+                        socketWrapper.Messages.Subscribe(
+                            (msg) => { Console.WriteLine($"recv: {msg}"); },
+                            (err) => { Console.WriteLine($"err: {err}"); },
+                            () => { Console.WriteLine("Completed"); });
+                        await socketWrapper.WaitUntilClose();
+                    }
+                    else
+                    {
+                        ctx.Response.StatusCode = 400;
+                        await ctx.Response.Body.WriteAsync(
+                            System.Text.Encoding.UTF8.GetBytes("Not a websocket request!"));
+                    }
+                }
+                else
+                {
+                    await next();
+                }
+            });
+
             app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
+        }
+
+        public static void ConfigJsonOptions(JsonSerializerOptions options)
+        {
+            options.SetupExtensions();
+            DiscriminatorConventionRegistry registry = options.GetDiscriminatorConventionRegistry();
+            registry.ClearConventions();
+            registry.RegisterConvention(new DefaultDiscriminatorConvention<string>(options, "_t"));
+            registry.RegisterType<TextMsg>();
+            registry.RegisterType<FileMsg>();
+            registry.RegisterType<ImageMsg>();
+            registry.DiscriminatorPolicy = DiscriminatorPolicy.Always;
         }
     }
 }
