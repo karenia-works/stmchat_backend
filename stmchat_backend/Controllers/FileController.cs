@@ -37,7 +37,7 @@ namespace stmchat_backend.Controllers
         public async Task<IActionResult> Post()
         {
             var files = Request.Form.Files;
-            var fileResultList = new List<string>();
+            var fileList = new List<string>();
 
             if (files.Any(f => f.Length == 0))
             {
@@ -47,15 +47,14 @@ namespace stmchat_backend.Controllers
             foreach (var file in files)
             {
                 var fileName = $@"{FileHash(file)}{Path.GetExtension(file.FileName)}";
-
                 var fullPath = Path.Combine("data", fileName);
                 await using var stream = new FileStream(fullPath, FileMode.Create);
                 await file.CopyToAsync(stream);
                 await _service.SaveInfo(fileName);
-                fileResultList.Add(await _service.GetFileUri(fileName));
+                fileList.Add(await _service.GetFileUri(fileName));
             }
 
-            return Ok(new {fileResultList});
+            return Ok(new {fileResultList = fileList});
         }
 
         private string FileHash(IFormFile file)

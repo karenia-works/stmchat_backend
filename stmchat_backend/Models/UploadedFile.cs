@@ -25,7 +25,7 @@ namespace stmchat_backend.Models
 
         public string GetUri()
         {
-            return string.Join('/', @"/file", Id);
+            return string.Join('/', @"/file", FileName);
         }
 
         // From mime.types from nginx

@@ -46,6 +46,7 @@ namespace stmchat_backend.Services
         public async Task<string> GetFileUri(string filename)
         {
             var res = await GetFileInfo(filename);
+            Console.WriteLine(res);
             return res?.GetUri();
         }
     }
