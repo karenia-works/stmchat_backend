@@ -31,7 +31,9 @@ namespace stmchat_backend.Models
         // From mime.types from nginx
         private static readonly List<string> _imageFormats = new List<string>
         {
-            "jpg", "jpeg", "jfif", "png", "gif", "webp", "bmp", "jng", "svg", "svgz", "tif", "tiff", "wbmp", "ico"
+            ".jpg", ".jpeg", ".jfif", ".png", ".gif",
+            ".webp", ".bmp", ".jng", ".svg", ".svgz",
+            ".tif", ".tiff", ".wbmp", ".ico"
         };
     }
 }
