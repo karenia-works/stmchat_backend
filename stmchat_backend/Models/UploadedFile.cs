@@ -11,13 +11,15 @@ namespace stmchat_backend.Models
         [BsonRepresentation(BsonType.ObjectId)]
         public string Id { get; set; }
 
+        public string FileName { get; set; }
+
         public string FileFormat { get; set; }
         public bool IsImage { get; set; }
 
-        public UploadedFile(string id)
+        public UploadedFile(string filename)
         {
-            Id = id;
-            FileFormat = Path.GetExtension(id);
+            FileName = filename;
+            FileFormat = Path.GetExtension(filename);
             IsImage = _imageFormats.Contains(FileFormat.ToLower());
         }
 

@@ -105,7 +105,7 @@ namespace stmchat_backend.Controllers
                 return BadRequest(ModelState);
             }
 
-            return new ObjectResult(profile);
+            return Ok(profile);
         }
     }
 }

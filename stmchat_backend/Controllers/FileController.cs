@@ -10,7 +10,7 @@ using stmchat_backend.Services;
 
 namespace stmchat_backend.Controllers
 {
-    [Microsoft.AspNetCore.Components.Route("api/[controller]")]
+    [Route("api/v1/[controller]")]
     [ApiController]
     public class FileController : ControllerBase
     {
@@ -47,12 +47,12 @@ namespace stmchat_backend.Controllers
             foreach (var file in files)
             {
                 var fileName = $@"{FileHash(file)}{Path.GetExtension(file.FileName)}";
-                var apiPath = string.Join('/', @"/image", fileName);
+
                 var fullPath = Path.Combine("data", fileName);
                 await using var stream = new FileStream(fullPath, FileMode.Create);
                 await file.CopyToAsync(stream);
-                fileResultList.Add(apiPath);
-                _service.SaveInfo(fileName);
+                await _service.SaveInfo(fileName);
+                fileResultList.Add(await _service.GetFileUri(fileName));
             }
 
             return Ok(new {fileResultList});
