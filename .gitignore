@@ -155,3 +155,8 @@ riderModule.iml
 .idea/
 
 # User Modified
+data/*
+!data/.gitkeep
+
+stmchat_backend/data/*
+!stmchat_backend/data/.gitkeep

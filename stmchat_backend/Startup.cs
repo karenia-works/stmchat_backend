@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using IdentityServer4.Services;
@@ -24,6 +25,8 @@ using stmchat_backend.Store;
 using stmchat_backend.Models;
 using stmchat_backend.Helpers;
 using Dahomey.Json.Serialization.Conventions;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.FileProviders;
 
 namespace stmchat_backend
 {
@@ -57,6 +60,7 @@ namespace stmchat_backend
             services.AddSingleton<GroupService>();
             services.AddSingleton<ProfileService>();
             services.AddSingleton<UserService>();
+            services.AddSingleton<FileService>();
 
             // Web service
             services.AddSingleton<ICorsPolicyService>(
@@ -124,6 +128,14 @@ namespace stmchat_backend
                 {
                     await next();
                 }
+            });
+
+            // File and Image
+            app.UseFileServer(new FileServerOptions
+            {
+                FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), @"data")),
+                RequestPath = new PathString("/file"),
+                EnableDirectoryBrowsing = env.IsDevelopment()
             });
 
             app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
