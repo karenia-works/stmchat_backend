@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using IdentityServer4;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.JsonPatch;
 using stmchat_backend.Models;
 using stmchat_backend.Services;
 
@@ -81,6 +82,30 @@ namespace stmchat_backend.Controllers
             }
 
             return NoContent();
+        }
+
+        [HttpPatch("{username}")]
+        public async Task<IActionResult> Patch(string username,
+            [FromBody] JsonPatchDocument<Profile> patchDocument)
+        {
+            if (patchDocument == null)
+            {
+                return BadRequest();
+            }
+
+            var profile = await _service.GetProfileByUsername(username);
+            if (profile == null)
+            {
+                return NotFound();
+            }
+
+            patchDocument.ApplyTo(profile, ModelState);
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            return new ObjectResult(profile);
         }
     }
 }
