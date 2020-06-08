@@ -83,5 +83,36 @@ namespace stmchat_backend.Services
             await _profile.InsertOneAsync(profile);
             return await GetProfileByUsername(profile.Username);
         }
+
+        public async Task<UpdateResult> AddUserFriend(string username, string friendname)
+        {
+            var profile = await GetProfileByUsername(username);
+            profile.Friends.Add(friendname);
+            var flicker = Builders<Profile>.Filter.Eq("Username", username);
+            var update = Builders<Profile>
+                .Update.Set("Friends", profile.Friends);
+            var result = await _profile.UpdateOneAsync(flicker, update);
+            return result;
+        }
+
+        public async Task<UpdateResult> DeleteUserFriend(string username, string friendname)
+        {
+            var profile = await GetProfileByUsername(username);
+            profile.Friends.Remove(friendname);
+            var flicker = Builders<Profile>.Filter.Eq("Username", username);
+            var update = Builders<Profile>
+                .Update.Set("Friends", profile.Friends);
+            var result = await _profile.UpdateOneAsync(flicker, update);
+            return result;
+        }
+
+        public async Task<bool> isFriend(string username, string friendname)
+        {
+            var profile = await GetProfileByUsername(username);
+            if(profile.Friends.Contains(friendname))
+                return true;
+            else
+                return false;
+        }
     }
 }

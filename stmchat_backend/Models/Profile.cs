@@ -4,7 +4,7 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
 //此model包含用户信息
-//应当包括用户id，用户邮箱，可能的简单用户信息，用户好友编号组（list），用户好友聊天记录组（list）顺序对应，群聊编号组，用户群聊聊天记录组（list）
+//应当包括用户id，用户邮箱，可能的简单用户信息，用户好友编号组（list）（里面放的是username），用户好友聊天记录组（list）顺序对应，群聊编号组，用户群聊聊天记录组（list）
 
 namespace stmchat_backend.Models
 {

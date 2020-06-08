@@ -107,5 +107,45 @@ namespace stmchat_backend.Controllers
 
             return Ok(profile);
         }
+
+        [HttpPost("{username}/friends")]
+        public async Task<IActionResult> addFriend(string username, string friendname)
+        {
+            //var res = await _service.GetProfileByUsername(username);
+            if(await _service.GetProfileByUsername(username) == null)
+                return NotFound("user not found");
+            
+            if(await _service.GetProfileByUsername(friendname) == null)
+                return NotFound("friend not found");
+            
+            if(await _service.isFriend(username, friendname))
+                return BadRequest("already friend");
+
+            var tem = await _service.AddUserFriend(username, friendname);
+            if(tem == null)
+                return BadRequest("add friend error");
+            else
+                return Ok();
+        }
+
+        [HttpDelete("{username}/friends")]
+        public async Task<IActionResult> deleteFriend(string username, string friendname)
+        {
+            //var res = await _service.GetProfileByUsername(username);
+            if(await _service.GetProfileByUsername(username) == null)
+                return NotFound("user not found");
+            
+            if(await _service.GetProfileByUsername(friendname) == null)
+                return NotFound("friend not found");
+            
+            if(!await _service.isFriend(username, friendname))
+                return BadRequest("already not friend");
+
+            var tem = await _service.DeleteUserFriend(username, friendname);
+            if(tem == null)
+                return BadRequest("delete friend error");
+            else
+                return Ok();
+        }
     }
 }
