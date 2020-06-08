@@ -144,6 +144,7 @@ namespace stmchat_backend
         public static void ConfigJsonOptions(JsonSerializerOptions options)
         {
             options.SetupExtensions();
+            options.Converters.Add(new ObjectIdConverter());
             DiscriminatorConventionRegistry registry = options.GetDiscriminatorConventionRegistry();
             registry.ClearConventions();
             registry.RegisterConvention(new DefaultDiscriminatorConvention<string>(options, "_t"));
