@@ -25,33 +25,54 @@ namespace stmchat_backend.Controllers
     public class TestController : ControllerBase
     {
 
-        public static List<JsonWebsocketWrapper<string, string>> testsockets = new List<JsonWebsocketWrapper<string, string>>();
-        public static async void Addsocket(WebSocket webSocket)
+        public ChatService chatservice;
+        public TestController(ChatService _chatservice)
         {
-            Console.WriteLine("make");
-            var tgt = new JsonWebsocketWrapper<string, string>(webSocket);
-            testsockets.Add(tgt);
-            await tgt.Messages.Subscribe()
-
-
-
+            chatservice = _chatservice;
         }
         [HttpGet("test")]
 
-        public async Task<string> jsontest()
+        public async Task<List<WsSendMsg>> jsontest()
         {
 
-            foreach (var socket in testsockets)
-            {
-                await socket.SendMessage("fuck");
-            }
-            return "ok";
+            var res = await chatservice.getGroupMsg("5ee10025d362711ed88b511a", 1);
+            return res;
         }
 
         [HttpGet]
         public string hello()
         {
             return "hello";
+        }
+        [HttpGet("insert")]
+        public String insert()
+        {
+
+            chatservice.insert();
+            return "Ok";
+        }
+        [HttpGet("what")]
+        public List<ChatLog> what()
+        {
+            var into = new List<ChatLog>();
+            var res = new ChatLog() { id = "", messages = new List<WsSendMsg>() };
+            var m1 = new WsSendMsg()
+            {
+                chatId = ObjectId.GenerateNewId().ToString(),
+                msg = new TextMsg()
+                {
+                    sender = "wang",
+                    time = DateTime.Now,
+                    forwardFrom = "sssdd",
+                    replyTo = ObjectId.GenerateNewId().ToString()
+                }
+            };
+            res.messages.Add(m1);
+
+            into.Add(res);
+            into.Add(res);
+            return into;
+
         }
     }
     public class basecase

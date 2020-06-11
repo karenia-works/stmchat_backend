@@ -32,7 +32,7 @@ namespace stmchat_backend.Services
         public async Task<UpdateResult> updateUser(User user)
         {
             var flicker = Builders<User>.Filter.Eq("id", user.Id);
-            var update = Builders<User>.Update.Set("username", user.Username).Set("password", user.Password);
+            var update = Builders<User>.Update.Set("Username", user.Username).Set("Password", user.Password);
             var result = await _users.UpdateOneAsync(flicker, update);
             return result;
         }
