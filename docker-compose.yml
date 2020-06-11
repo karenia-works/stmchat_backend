@@ -13,6 +13,8 @@ services:
       - ./data/:/app/data
     networks:
       - stmchat
+    depends_on:
+      - stmchat_mongo
 
   stmchat_mongo:
     image: mongo:latest
@@ -25,6 +27,31 @@ services:
     networks:
       - stmchat
 
+  stmchat_frontend:
+    image: stmchat_frontend
+    restart: always
+    build:
+      context: "."
+      dockerfile: "frontend.Dockerfile"
+    networks:
+      -stmchat
+
+  stmchat_nginx:
+    image: nginx:stable
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginxconf:/etc/nginx/conf.d
+      - ./data:/data
+    networks:
+      - stmchat
+    depends_on:
+      - stmchat_mongo
+      - stmchat_backend
+      - stmchat_frontend
+      
 volumes:
   mongo_data:
 
