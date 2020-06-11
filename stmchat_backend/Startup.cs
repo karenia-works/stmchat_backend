@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using IdentityServer4.Services;
@@ -22,6 +23,7 @@ using stmchat_backend.Models.Settings;
 using stmchat_backend.Services;
 using stmchat_backend.Store;
 using stmchat_backend.Models;
+
 using System.Net.WebSockets;
 using System.Threading;
 
@@ -29,6 +31,8 @@ using Dahomey.Json.Serialization.Conventions;
 using stmchat_backend.Helpers;
 using stmchat_backend.Controllers;
 using Microsoft.AspNetCore.Http;
+
+
 namespace stmchat_backend
 {
     public class Startup
@@ -43,9 +47,6 @@ namespace stmchat_backend
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
-
-
             // ID4
             services.AddIdentityServer()
                 .AddDeveloperSigningCredential()
@@ -60,10 +61,14 @@ namespace stmchat_backend
                 setting => setting.GetRequiredService<IOptions<DbSettings>>().Value
             );
 
-            // Service
+            // Singleton Service
+            services.AddSingleton<GroupService>();
             services.AddSingleton<ProfileService>();
             services.AddSingleton<UserService>();
+
             services.AddSingleton<ChatService>();
+            services.AddSingleton<FileService>();
+
 
             // Web service
             services.AddSingleton<ICorsPolicyService>(
@@ -80,11 +85,8 @@ namespace stmchat_backend
             services.AddRouting(options => { options.LowercaseUrls = true; });
 
             services.AddControllers()
-                //.AddNewtonsoftJson(options => options.UseMemberCasing())
-                .AddJsonOptions(option =>
-                {
-                    ConfigJsonOptions(option.JsonSerializerOptions);
-                });
+
+                .AddJsonOptions(option => { ConfigJsonOptions(option.JsonSerializerOptions); });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -97,9 +99,12 @@ namespace stmchat_backend
             }
 
             app.UseRouting();
-            // app.UseIdentityServer();
-            // app.UseAuthentication();
-            // app.UseAuthorization();
+
+
+            app.UseIdentityServer();
+            app.UseAuthentication();
+            app.UseAuthorization();
+
             app.UseCors(policy =>
             {
                 policy.AllowAnyHeader()
@@ -135,12 +140,53 @@ namespace stmchat_backend
                 }
 
             });
+
+            app.Use(async (ctx, next) =>
+            {
+                if (ctx.Request.Path == "/ws")
+                {
+                    if (ctx.WebSockets.IsWebSocketRequest)
+                    {
+                        var socket = await ctx.WebSockets.AcceptWebSocketAsync();
+                        var jsonConfig = new JsonSerializerOptions();
+                        ConfigJsonOptions(jsonConfig);
+                        var socketWrapper = new JsonWebsocketWrapper<Message, Message>(socket, jsonConfig);
+                        socketWrapper.Messages.Subscribe(
+                            (msg) => { Console.WriteLine($"recv: {msg}"); },
+                            (err) => { Console.WriteLine($"err: {err}"); },
+                            () => { Console.WriteLine("Completed"); });
+                        await socketWrapper.WaitUntilClose();
+                    }
+                    else
+                    {
+                        ctx.Response.StatusCode = 400;
+                        await ctx.Response.Body.WriteAsync(
+                            System.Text.Encoding.UTF8.GetBytes("Not a websocket request!"));
+                    }
+                }
+                else
+                {
+                    await next();
+                }
+            });
+
+            // File and Image
+            app.UseFileServer(new FileServerOptions
+            {
+                FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), @"data")),
+                RequestPath = new PathString("/file"),
+                EnableDirectoryBrowsing = env.IsDevelopment()
+            });
+
             app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
         }
 
         public static void ConfigJsonOptions(JsonSerializerOptions options)
         {
             options.SetupExtensions();
+
+            options.Converters.Add(new ObjectIdConverter());
+
             DiscriminatorConventionRegistry registry = options.GetDiscriminatorConventionRegistry();
             registry.ClearConventions();
             registry.RegisterConvention(new DefaultDiscriminatorConvention<string>(options, "_t"));
@@ -148,7 +194,9 @@ namespace stmchat_backend
             registry.RegisterType<FileMsg>();
             registry.RegisterType<ImageMsg>();
             registry.DiscriminatorPolicy = DiscriminatorPolicy.Always;
+
             options.IgnoreNullValues = true;
+
         }
     }
 }

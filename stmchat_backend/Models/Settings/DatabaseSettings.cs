@@ -8,7 +8,7 @@
         public string ChatGroupCollectionName { get; set; }
         public string ChatLogCollectionName { get; set; }
         public string ProfileCollectionName { get; set; }
-        public string ImageBucketName { get; set; }
+        public string FileBucketName { get; set; }
     }
 
     public interface IDbSettings
@@ -19,6 +19,6 @@
         string ChatGroupCollectionName { get; set; }
         string ChatLogCollectionName { get; set; }
         string ProfileCollectionName { get; set; }
-        string ImageBucketName { get; set; }
+        string FileBucketName { get; set; }
     }
 }

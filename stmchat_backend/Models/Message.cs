@@ -6,11 +6,13 @@ using System.Text;
 using Dahomey.Json;
 using Dahomey.Json.Attributes;
 using System.Text.Json;
+
 namespace stmchat_backend.Models
 {
     [BsonKnownTypes(typeof(TextMsg), typeof(ImageMsg), typeof(FileMsg))]
     public class SendMessage
     {
+
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
         public string id { get; set; }
@@ -64,12 +66,14 @@ namespace stmchat_backend.Models
     {
         public string text { get; set; }
     }
+
     [JsonDiscriminator("image")]
     public class RImageMsg : RecvMessage
     {
-        public string image { get; set; }
-        public string caption { get; set; }
+        public string Image { get; set; }
+        public string Caption { get; set; }
     }
+
     [JsonDiscriminator("file")]
     public class RFileMsg : RecvMessage
     {
@@ -96,5 +100,6 @@ namespace stmchat_backend.Models
         public string chatId { get; set; }
         public RecvMessage msg { get; set; }
     }
+
 
 }

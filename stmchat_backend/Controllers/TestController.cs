@@ -35,8 +35,13 @@ namespace stmchat_backend.Controllers
         public async Task<List<WsSendMsg>> jsontest()
         {
 
-            var res = await chatservice.getGroupMsg("5ee1ba044ee73319a8513e19", 2);
-            return res;
+            var test = new TextMsg();
+            test.Id = "11";
+            test.Sender = "sss";
+            test.Text = "ddd";
+            test.Time = new DateTime();
+            return "o~~k";
+
         }
 
         [HttpGet]
