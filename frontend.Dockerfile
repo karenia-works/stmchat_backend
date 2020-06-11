@@ -7,7 +7,6 @@ WORKDIR /app
 RUN git clone --depth=1 https://github.com/karenia-works/stmchat_frontend
 
 WORKDIR /app/stmchat_frontend
-COPY . .
 
 RUN yarn install
 RUN yarn build
