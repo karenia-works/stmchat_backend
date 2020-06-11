@@ -23,7 +23,7 @@ using stmchat_backend.Models.Settings;
 using stmchat_backend.Services;
 using stmchat_backend.Store;
 using stmchat_backend.Models;
-
+using Microsoft.Extensions.FileProviders;
 using System.Net.WebSockets;
 using System.Threading;
 
@@ -143,19 +143,19 @@ namespace stmchat_backend
 
             app.Use(async (ctx, next) =>
             {
-                if (ctx.Request.Path == "/ws")
+                if (ctx.Request.Path.ToString().Split('/')[0] == "ws")
                 {
                     if (ctx.WebSockets.IsWebSocketRequest)
                     {
+                        var name = ctx.Request.Path.ToString().Split('/')[1];
                         var socket = await ctx.WebSockets.AcceptWebSocketAsync();
                         var jsonConfig = new JsonSerializerOptions();
                         ConfigJsonOptions(jsonConfig);
-                        var socketWrapper = new JsonWebsocketWrapper<Message, Message>(socket, jsonConfig);
-                        socketWrapper.Messages.Subscribe(
-                            (msg) => { Console.WriteLine($"recv: {msg}"); },
-                            (err) => { Console.WriteLine($"err: {err}"); },
-                            () => { Console.WriteLine("Completed"); });
-                        await socketWrapper.WaitUntilClose();
+                        using (var scope = ctx.RequestServices.CreateScope())
+                        {
+                            var chatservice = scope.ServiceProvider.GetService<ChatService>();
+                            chatservice.Addsocket(name, socket, jsonConfig);
+                        }
                     }
                     else
                     {
