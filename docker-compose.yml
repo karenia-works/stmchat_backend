@@ -44,7 +44,7 @@ services:
       - "443:443"
     volumes:
       - ./nginxconf:/etc/nginx/conf.d
-      - ./data:/app/data
+      - ./data:/data
     networks:
       - stmchat
     depends_on:
