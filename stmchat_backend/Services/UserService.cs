@@ -39,6 +39,7 @@ namespace stmchat_backend.Services
         public async Task<UpdateResult> UpdateUser(User user)
         {
             var flicker = Builders<User>.Filter.Eq("id", user.Id);
+
             var update = Builders<User>
                 .Update
                 .Set("username", user.Username)

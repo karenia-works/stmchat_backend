@@ -12,11 +12,15 @@ namespace stmchat_backend.Models
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        public string Id { get; set; }
 
-        public string GroupName { get; set; } //搜索用的群名类似用户名
-        public string Description { get; set; } //群描述
-        public List<String> Members { get; set; } //群成员,存储username!!
-        [BsonId] public string Chatlog { get; set; } //一一对应的聊天记录
+        public string id { get; set; }
+        public string name { get; set; }//搜索用的群名类似用户名
+        public string AvatarUrl { get; set; }
+        public string describ { get; set; }//群描述
+        public List<String> members { get; set; }//群成员,存储username!!
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string chatlog { get; set; }//一一对应的聊天记录
+    
+
     }
 }

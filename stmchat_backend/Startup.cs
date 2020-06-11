@@ -23,10 +23,15 @@ using stmchat_backend.Models.Settings;
 using stmchat_backend.Services;
 using stmchat_backend.Store;
 using stmchat_backend.Models;
-using stmchat_backend.Helpers;
+
+using System.Net.WebSockets;
+using System.Threading;
+
 using Dahomey.Json.Serialization.Conventions;
+using stmchat_backend.Helpers;
+using stmchat_backend.Controllers;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.FileProviders;
+
 
 namespace stmchat_backend
 {
@@ -60,7 +65,10 @@ namespace stmchat_backend
             services.AddSingleton<GroupService>();
             services.AddSingleton<ProfileService>();
             services.AddSingleton<UserService>();
+
+            services.AddSingleton<ChatService>();
             services.AddSingleton<FileService>();
+
 
             // Web service
             services.AddSingleton<ICorsPolicyService>(
@@ -77,28 +85,60 @@ namespace stmchat_backend
             services.AddRouting(options => { options.LowercaseUrls = true; });
 
             services.AddControllers()
+
                 .AddJsonOptions(option => { ConfigJsonOptions(option.JsonSerializerOptions); });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IServiceProvider serviceProvider)
         {
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
 
             app.UseRouting();
-            app.UseWebSockets();
+
 
             app.UseIdentityServer();
             app.UseAuthentication();
             app.UseAuthorization();
+
             app.UseCors(policy =>
             {
                 policy.AllowAnyHeader()
                     .AllowAnyMethod()
-                    .AllowAnyOrigin();
+                    .WithOrigins(new[] { "https://postwoman.io" });
+            });
+            var webSocketOptions = new WebSocketOptions();
+            webSocketOptions.AllowedOrigins.Add("https://postwoman.io");
+            app.UseWebSockets(webSocketOptions);
+
+            app.Use(async (context, next) =>
+            {
+                if (context.WebSockets.IsWebSocketRequest || context.Request.Path.Value.Split('/')[0] == "/ws")
+                {
+                    var websocket = await context.WebSockets.AcceptWebSocketAsync();
+                    ChatService _chatservice;
+                    using (var scope = context.RequestServices.CreateScope())
+                    {
+                        _chatservice = scope.ServiceProvider.GetService<ChatService>();
+
+                    }
+                    var tmp = context.Request.Path;
+                    var id = tmp.Value.Split('/')[1];
+                    var jsonoption = new JsonSerializerOptions();
+                    ConfigJsonOptions(jsonoption);
+                    var ws = _chatservice.Addsocket(id, websocket, jsonoption);
+                    await ws.WaitUntilClose();
+                }
+                else
+                {
+
+                    await next();
+                }
+
             });
 
             app.Use(async (ctx, next) =>
@@ -144,7 +184,9 @@ namespace stmchat_backend
         public static void ConfigJsonOptions(JsonSerializerOptions options)
         {
             options.SetupExtensions();
+
             options.Converters.Add(new ObjectIdConverter());
+
             DiscriminatorConventionRegistry registry = options.GetDiscriminatorConventionRegistry();
             registry.ClearConventions();
             registry.RegisterConvention(new DefaultDiscriminatorConvention<string>(options, "_t"));
@@ -152,6 +194,9 @@ namespace stmchat_backend
             registry.RegisterType<FileMsg>();
             registry.RegisterType<ImageMsg>();
             registry.DiscriminatorPolicy = DiscriminatorPolicy.Always;
+
+            options.IgnoreNullValues = true;
+
         }
     }
 }

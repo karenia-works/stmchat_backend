@@ -15,6 +15,8 @@ using Dahomey.Json;
 using System.Text.Json;
 using Dahomey.Json.Serialization.Conventions;
 using Dahomey.Json.Attributes;
+using stmchat_backend.Helpers;
+using System.Net.WebSockets;
 namespace stmchat_backend.Controllers
 {
     [Route("/api/v1/test")]
@@ -22,9 +24,15 @@ namespace stmchat_backend.Controllers
 
     public class TestController : ControllerBase
     {
+
+        public ChatService chatservice;
+        public TestController(ChatService _chatservice)
+        {
+            chatservice = _chatservice;
+        }
         [HttpGet("test")]
 
-        public string jsontest()
+        public async Task<List<WsSendMsg>> jsontest()
         {
 
             var test = new TextMsg();
@@ -33,12 +41,43 @@ namespace stmchat_backend.Controllers
             test.Text = "ddd";
             test.Time = new DateTime();
             return "o~~k";
+
         }
 
         [HttpGet]
         public string hello()
         {
             return "hello";
+        }
+        [HttpGet("insert")]
+        public String insert()
+        {
+
+            chatservice.insert();
+            return "Ok";
+        }
+        [HttpGet("what")]
+        public List<ChatLog> what()
+        {
+            var into = new List<ChatLog>();
+            var res = new ChatLog() { id = "", messages = new List<WsSendMsg>() };
+            var m1 = new WsSendMsg()
+            {
+                chatId = ObjectId.GenerateNewId().ToString(),
+                msg = new TextMsg()
+                {
+                    sender = "wang",
+                    time = DateTime.Now,
+                    forwardFrom = "sssdd",
+                    replyTo = ObjectId.GenerateNewId().ToString()
+                }
+            };
+            res.messages.Add(m1);
+
+            into.Add(res);
+            into.Add(res);
+            return into;
+
         }
     }
     public class basecase
