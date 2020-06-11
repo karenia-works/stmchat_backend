@@ -23,10 +23,10 @@ namespace stmchat_backend.Services
 
         public async Task<ChatGroup> MakeGroup(string chatlogId, ChatGroup creating)
         {
-            creating.Chatlog = chatlogId;
+            creating.chatlog = chatlogId;
             var tmp = await _groups
                 .AsQueryable()
-                .Where(o => o.GroupName == creating.GroupName)
+                .Where(o => o.name == creating.name)
                 .FirstOrDefaultAsync();
             if (tmp != null)
             {
@@ -36,7 +36,7 @@ namespace stmchat_backend.Services
             await _groups.InsertOneAsync(creating);
             var res = await _groups
                 .AsQueryable()
-                .Where(o => o.GroupName == creating.GroupName)
+                .Where(o => o.name == creating.name)
                 .FirstOrDefaultAsync();
             return res;
         }
@@ -45,7 +45,7 @@ namespace stmchat_backend.Services
         {
             return await _groups
                 .AsQueryable()
-                .Where(o => o.GroupName == groupName)
+                .Where(o => o.name == groupName)
                 .FirstOrDefaultAsync();
         }
 
@@ -53,17 +53,17 @@ namespace stmchat_backend.Services
         {
             var group = await _groups
                 .AsQueryable()
-                .Where(o => o.GroupName == groupName)
+                .Where(o => o.name == groupName)
                 .FirstOrDefaultAsync();
             if (group == null)
                 return null;
-            if (group.Members.Contains(user))
+            if (group.members.Contains(user))
             {
                 return null;
             }
 
             var flicker = Builders<ChatGroup>.Filter.Eq("name", groupName);
-            var update = Builders<ChatGroup>.Update.Push(o => o.Members, user);
+            var update = Builders<ChatGroup>.Update.Push(o => o.members, user);
 
             return await _groups.UpdateOneAsync(flicker, update);
         }
@@ -72,15 +72,15 @@ namespace stmchat_backend.Services
         {
             var group = await _groups
                 .AsQueryable()
-                .Where(o => o.GroupName == groupName)
+                .Where(o => o.name == groupName)
                 .FirstOrDefaultAsync();
             if (group == null)
             {
                 return null;
             }
 
-            await _chatlogs.DeleteOneAsync(o => o.Id == group.Chatlog);
-            return await _groups.DeleteOneAsync(o => o.GroupName == groupName);
+            await _chatlogs.DeleteOneAsync(o => o.id == group.chatlog);
+            return await _groups.DeleteOneAsync(o => o.name == groupName);
         }
     }
 }

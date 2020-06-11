@@ -30,25 +30,9 @@ namespace stmchat_backend.Controllers
         {
             chatservice = _chatservice;
         }
-        [HttpGet("test")]
 
-        public async Task<List<WsSendMsg>> jsontest()
-        {
 
-            var test = new TextMsg();
-            test.Id = "11";
-            test.Sender = "sss";
-            test.Text = "ddd";
-            test.Time = new DateTime();
-            return "o~~k";
 
-        }
-
-        [HttpGet]
-        public string hello()
-        {
-            return "hello";
-        }
         [HttpGet("insert")]
         public String insert()
         {

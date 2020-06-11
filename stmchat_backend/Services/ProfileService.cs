@@ -64,7 +64,7 @@ namespace stmchat_backend.Services
             var res = profile?.Groups
                 .Select(i =>
                     _group.AsQueryable()
-                        .Where(cg => cg.Id == i)
+                        .Where(cg => cg.id == i)
                         .FirstOrDefaultAsync()
                         .Result
                 )
@@ -109,7 +109,7 @@ namespace stmchat_backend.Services
         public async Task<bool> isFriend(string username, string friendname)
         {
             var profile = await GetProfileByUsername(username);
-            if(profile.Friends.Contains(friendname))
+            if (profile.Friends.Contains(friendname))
                 return true;
             else
                 return false;
