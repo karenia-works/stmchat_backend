@@ -58,8 +58,9 @@ namespace stmchat_backend
         }
         public async void dealMsg(string name, WsRecvMsg recv)
         {
-            var groupname = recv.chatId;
-            var group = await FindGroupMember(groupname);
+            var groupId = recv.chatId;
+            var group = await FindGroupMember(groupId);
+            var groupname = group.chatlog;
             var members = group.members;
             var logid = group.chatlog;
             var msg = TransWsMsg(name, recv);
@@ -91,16 +92,19 @@ namespace stmchat_backend
                 }
             }
         }
-        // public List<WsSendMsg> getUnreadMsg(string name)
-        // {
-        //     var allunread = new List<WsSendMsg>();
+        public async Task<List<WsSendMsg>> getUnreadMsg(string name)
+        {
+            var allunread = new List<WsSendMsg>();
 
-        //     var unreads = notreadmap[name];
-        //     foreach (var item in unreads)
-        //     {
-
-        //     }
-        // }
+            var unreads = notreadmap[name];
+            foreach (var item in unreads)
+            {
+                if (item.Value != 0)
+                { allunread.AddRange(await getGroupMsg(item.Key, item.Value)); }
+            }
+            unreads.Remove(name);
+            return allunread;
+        }
         public WsSendMsg TransWsMsg(string name, WsRecvMsg rwsmsg)
         {
             var tgt = TransMsg(name, rwsmsg.msg);
@@ -204,8 +208,22 @@ namespace stmchat_backend
                     text = "text fuck"
                 }
             };
+            var m3 = new WsSendMsg()
+            {
+                chatId = ObjectId.GenerateNewId().ToString(),
+                msg = new TextMsg()
+                {
+                    id = ObjectId.GenerateNewId().ToString(),
+                    sender = "yu",
+                    time = DateTime.Now,
+                    forwardFrom = "sssdd",
+                    replyTo = ObjectId.GenerateNewId().ToString(),
+                    text = "text fuck"
+                }
+            };
             res.messages.Add(m1);
             res.messages.Add(m2);
+            res.messages.Add(m3);
             await _chatlog.InsertOneAsync(res);
 
         }

@@ -35,7 +35,7 @@ namespace stmchat_backend.Controllers
         public async Task<List<WsSendMsg>> jsontest()
         {
 
-            var res = await chatservice.getGroupMsg("5ee10025d362711ed88b511a", 1);
+            var res = await chatservice.getGroupMsg("5ee1ba044ee73319a8513e19", 2);
             return res;
         }
 
