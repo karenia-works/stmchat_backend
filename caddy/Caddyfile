@@ -1,0 +1,28 @@
+:80, :443 {
+    root * /app
+
+    @not_api {
+        not {
+            path /api/* /connect/* /ws/*
+        }
+    }
+    
+    @api {
+        path /api/* /connect/* /ws/*
+    }
+
+    reverse_proxy @api {
+        to stmchat_frontend:80
+        header {
+            Access-Control-Allow-Origin *
+            Access-Control-Allow-Methods GET,POST,PATCH,PUT,DELETE,OPTIONS
+            Access-Control-Allow-Headers DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range
+            Access-Control-Expose-Headers Content-Length,Content-Range
+        }
+    }
+    
+    route @not_api {
+        try_files {path} {path}.html {path}.htm index.html index.htm
+        file_server
+    }
+}
