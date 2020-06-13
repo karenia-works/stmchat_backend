@@ -26,7 +26,6 @@ using stmchat_backend.Models;
 using Microsoft.Extensions.FileProviders;
 using System.Net.WebSockets;
 using System.Threading;
-
 using Dahomey.Json.Serialization.Conventions;
 using stmchat_backend.Helpers;
 using stmchat_backend.Controllers;
@@ -85,14 +84,12 @@ namespace stmchat_backend
             services.AddRouting(options => { options.LowercaseUrls = true; });
 
             services.AddControllers()
-
                 .AddJsonOptions(option => { ConfigJsonOptions(option.JsonSerializerOptions); });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IServiceProvider serviceProvider)
         {
-
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -109,7 +106,7 @@ namespace stmchat_backend
             {
                 policy.AllowAnyHeader()
                     .AllowAnyMethod()
-                    .WithOrigins(new[] { "https://postwoman.io" });
+                    .WithOrigins(new[] {"https://postwoman.io"});
             });
             var webSocketOptions = new WebSocketOptions();
             webSocketOptions.AllowedOrigins.Add("https://postwoman.io");
@@ -124,8 +121,8 @@ namespace stmchat_backend
                     using (var scope = context.RequestServices.CreateScope())
                     {
                         _chatservice = scope.ServiceProvider.GetService<ChatService>();
-
                     }
+
                     var tmp = context.Request.Path;
                     var id = tmp.Value.Split('/')[1];
                     var jsonoption = new JsonSerializerOptions();
@@ -135,10 +132,8 @@ namespace stmchat_backend
                 }
                 else
                 {
-
                     await next();
                 }
-
             });
 
             app.Use(async (ctx, next) =>
@@ -196,7 +191,6 @@ namespace stmchat_backend
             registry.DiscriminatorPolicy = DiscriminatorPolicy.Always;
 
             options.IgnoreNullValues = true;
-
         }
     }
 }
