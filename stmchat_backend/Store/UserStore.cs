@@ -36,7 +36,7 @@ namespace stmchat_backend.Store
                     "custom",
                     new Claim[]
                     {
-                        new Claim("id", result.Id),
+                        //new Claim("id", result.Id),
                         new Claim("Name", result.Username),
                     }
                 );

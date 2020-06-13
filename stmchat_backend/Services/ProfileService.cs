@@ -94,7 +94,16 @@ namespace stmchat_backend.Services
             var result = await _profile.UpdateOneAsync(flicker, update);
             return result;
         }
-
+        public async Task<UpdateResult> AddUserGroup(string username, string groupname)
+        {
+            var profile = await GetProfileByUsername(username);
+            profile.Groups.Add(groupname);
+            var flicker = Builders<Profile>.Filter.Eq("Username", username);
+            var update = Builders<Profile>
+                .Update.Set("Groups", profile.Groups);
+            var result = await _profile.UpdateOneAsync(flicker, update);
+            return result;
+        }
         public async Task<UpdateResult> DeleteUserFriend(string username, string friendname)
         {
             var profile = await GetProfileByUsername(username);

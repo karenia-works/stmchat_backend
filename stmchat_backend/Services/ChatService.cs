@@ -42,12 +42,19 @@ namespace stmchat_backend
 
             Wsmap = new Dictionary<string, JsonWebsocketWrapper<WsRecvMsg, WsSendMsg>>();
         }
-        public JsonWebsocketWrapper<WsRecvMsg, WsSendMsg> Addsocket(String name, WebSocket webSocket, JsonSerializerOptions jsonSerializer)
+        public async Task<JsonWebsocketWrapper<WsRecvMsg, WsSendMsg>> Addsocket(String name, WebSocket webSocket, JsonSerializerOptions jsonSerializer)
         {
 
             var tgt = new JsonWebsocketWrapper<WsRecvMsg, WsSendMsg>(webSocket, jsonSerializer);
             Wsmap.Add(name, tgt);
-
+            var unread = await getUnreadMsg(name);
+            if (unread.Count != 0)
+            {
+                foreach (var item in unread)
+                {
+                    await tgt.SendMessage(item);
+                }
+            }
             tgt.Messages.Subscribe(
                           (msg) => { dealMsg(name, msg); },
                            (err) => { Console.WriteLine("err: {0}", err); },

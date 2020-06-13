@@ -130,7 +130,7 @@ namespace stmchat_backend
                     var id = tmp.Value.Split('/')[1];
                     var jsonoption = new JsonSerializerOptions();
                     ConfigJsonOptions(jsonoption);
-                    var ws = _chatservice.Addsocket(id, websocket, jsonoption);
+                    var ws = await _chatservice.Addsocket(id, websocket, jsonoption);
                     await ws.WaitUntilClose();
                 }
                 else

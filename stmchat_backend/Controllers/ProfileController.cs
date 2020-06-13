@@ -15,10 +15,13 @@ namespace stmchat_backend.Controllers
     public class ProfileController : ControllerBase
     {
         private readonly ProfileService _service;
+        private GroupService _groupService;
 
-        public ProfileController(ProfileService service)
+        public ProfileController(ProfileService service, GroupService groupService)
         {
             _service = service;
+            _groupService = groupService;
+
         }
 
         // 可能会因为用户名叫`me`而出错
@@ -27,12 +30,12 @@ namespace stmchat_backend.Controllers
         [Authorize(IdentityServerConstants.LocalApi.PolicyName)]
         public async Task<IActionResult> Get()
         {
-            var profileId = User
+            var profilename = User
                 .Claims
-                .Where(claim => claim.Type == "sub")
+                .Where(claim => claim.Type == "Name")
                 .FirstOrDefault()
                 .Value;
-            var profile = await _service.GetProfileById(profileId);
+            var profile = await _service.GetProfileByUsername(profilename);
             return Ok(profile);
         }
 
@@ -112,37 +115,41 @@ namespace stmchat_backend.Controllers
         public async Task<IActionResult> addFriend(string username, string friendname)
         {
             //var res = await _service.GetProfileByUsername(username);
-            if(await _service.GetProfileByUsername(username) == null)
+            if (await _service.GetProfileByUsername(username) == null)
                 return NotFound("user not found");
-            
-            if(await _service.GetProfileByUsername(friendname) == null)
+
+            if (await _service.GetProfileByUsername(friendname) == null)
                 return NotFound("friend not found");
-            
-            if(await _service.isFriend(username, friendname))
+
+            if (await _service.isFriend(username, friendname))
                 return BadRequest("already friend");
 
             var tem = await _service.AddUserFriend(username, friendname);
-            if(tem == null)
+
+            if (tem == null)
                 return BadRequest("add friend error");
             else
+            {
+                await _groupService.MakeFriend(username, friendname);
                 return Ok();
+            }
         }
 
         [HttpDelete("{username}/friends")]
         public async Task<IActionResult> deleteFriend(string username, string friendname)
         {
             //var res = await _service.GetProfileByUsername(username);
-            if(await _service.GetProfileByUsername(username) == null)
+            if (await _service.GetProfileByUsername(username) == null)
                 return NotFound("user not found");
-            
-            if(await _service.GetProfileByUsername(friendname) == null)
+
+            if (await _service.GetProfileByUsername(friendname) == null)
                 return NotFound("friend not found");
-            
-            if(!await _service.isFriend(username, friendname))
+
+            if (!await _service.isFriend(username, friendname))
                 return BadRequest("already not friend");
 
             var tem = await _service.DeleteUserFriend(username, friendname);
-            if(tem == null)
+            if (tem == null)
                 return BadRequest("delete friend error");
             else
                 return Ok();

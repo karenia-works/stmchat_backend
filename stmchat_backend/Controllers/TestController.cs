@@ -26,18 +26,59 @@ namespace stmchat_backend.Controllers
     {
 
         public ChatService chatservice;
-        public TestController(ChatService _chatservice)
+        public ProfileService profileservice;
+        public GroupService groupservice;
+        public TestController(ChatService _chatservice, ProfileService _profileservice, GroupService _groupservice)
         {
             chatservice = _chatservice;
+            profileservice = _profileservice;
+            groupservice = _groupservice;
         }
 
 
 
         [HttpGet("insert")]
-        public String insert()
+        public async Task<String> insert()
         {
-
-            chatservice.insert();
+            var ms_wang = new Profile()
+            {
+                Username = "wang"
+            };
+            ms_wang.Groups.Add("kruodis");
+            var ms_yang = new Profile()
+            {
+                Username = "yang"
+            };
+            var ms_li = new Profile()
+            {
+                Username = "li"
+            };
+            var ms_he = new Profile()
+            {
+                Username = "he"
+            };
+            await profileservice.CreateProfile(ms_wang);
+            await profileservice.CreateProfile(ms_yang);
+            await profileservice.CreateProfile(ms_li);
+            await profileservice.CreateProfile(ms_he);
+            await profileservice.AddUserFriend("wang", "li");
+            await groupservice.MakeFriend("wang", "li");
+            await profileservice.AddUserFriend("wang", "yang");
+            await groupservice.MakeFriend("wang", "yang");
+            var group1 = new ChatGroup()
+            {
+                name = "kruodis",
+                isFriend = false,
+                owner = "wang",
+                describ = "wei are family",
+                members = new List<string>()
+            };
+            group1.members.Add("wang");
+            await groupservice.MakeGroup(group1);
+            await profileservice.AddUserGroup("he", "kruodis");
+            await groupservice.AddGroup("kurodis", "he");
+            await profileservice.AddUserGroup("li", "kruodis");
+            await groupservice.AddGroup("kurodis", "li");
             return "Ok";
         }
         [HttpGet("what")]

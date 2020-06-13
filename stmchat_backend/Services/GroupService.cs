@@ -21,9 +21,9 @@ namespace stmchat_backend.Services
             _chatlogs = database.GetCollection<ChatLog>(settings.ChatLogCollectionName);
         }
 
-        public async Task<ChatGroup> MakeGroup(string chatlogId, ChatGroup creating)
+        public async Task<ChatGroup> MakeGroup(ChatGroup creating)
         {
-            creating.chatlog = chatlogId;
+
             var tmp = await _groups
                 .AsQueryable()
                 .Where(o => o.name == creating.name)
@@ -38,6 +38,13 @@ namespace stmchat_backend.Services
                 .AsQueryable()
                 .Where(o => o.name == creating.name)
                 .FirstOrDefaultAsync();
+            var chatlogid = ObjectId.GenerateNewId().ToString();
+            creating.chatlog = chatlogid;
+            var chatlogmake = new ChatLog()
+            {
+                id = chatlogid
+            };
+            await _chatlogs.InsertOneAsync(chatlogmake);
             return res;
         }
 
@@ -81,6 +88,38 @@ namespace stmchat_backend.Services
 
             await _chatlogs.DeleteOneAsync(o => o.id == group.chatlog);
             return await _groups.DeleteOneAsync(o => o.name == groupName);
+        }
+        public async Task<string> MakeFriend(string owner, string passby)
+        {
+            if (string.Compare(owner, passby) > 0)
+            {
+                var chat = new ChatGroup()
+                {
+                    id = ObjectId.GenerateNewId().ToString(),
+                    name = owner + "+" + passby,
+                    owner = owner
+
+                };
+
+                chat.members.Add(owner);
+                chat.members.Add(passby);
+                await MakeGroup(chat);
+            }
+            else
+            {
+                var chat = new ChatGroup()
+                {
+                    id = ObjectId.GenerateNewId().ToString(),
+                    name = passby + "+" + owner,
+                    owner = owner
+
+                };
+
+                chat.members.Add(owner);
+                chat.members.Add(passby);
+                await MakeGroup(chat);
+            }
+            return "ok";
         }
     }
 }
