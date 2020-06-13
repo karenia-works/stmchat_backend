@@ -34,7 +34,7 @@ services:
       context: "."
       dockerfile: "frontend.Dockerfile"
     networks:
-      -stmchat
+      - stmchat
 
   stmchat_nginx:
     image: nginx:stable
