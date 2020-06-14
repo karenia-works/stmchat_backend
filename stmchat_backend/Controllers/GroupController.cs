@@ -10,6 +10,8 @@ using MongoDB.Bson;
 using System.Collections.Generic;
 namespace stmchat_backend.Controllers
 {
+    [Route("api/v1/[controller]")]
+    [ApiController]
     public class GroupController : ControllerBase
     {
         public GroupService groupservice;
