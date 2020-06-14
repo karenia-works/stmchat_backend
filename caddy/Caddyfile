@@ -1,6 +1,10 @@
 :80, :443 {
     root * /app
 
+    log {
+        format console
+    }
+
     @not_api {
         not {
             path /api/* /connect/* /ws/*
@@ -12,14 +16,15 @@
     }
 
     reverse_proxy @api {
-        to stmchat_frontend:80
+        to stmchat_backend:80
     }
-    
+
     header @api {
         Access-Control-Allow-Origin *
         Access-Control-Allow-Methods GET,POST,PATCH,PUT,DELETE,OPTIONS
         Access-Control-Allow-Headers DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range
         Access-Control-Expose-Headers Content-Length,Content-Range
+        defer
     }
     
     route @not_api {
