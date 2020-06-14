@@ -10,8 +10,8 @@ namespace stmchat_backend.Services
 {
     public class GroupService
     {
-        private readonly IMongoCollection<ChatGroup> _groups;
-        private readonly IMongoCollection<ChatLog> _chatlogs;
+        public IMongoCollection<ChatGroup> _groups;
+        public IMongoCollection<ChatLog> _chatlogs;
 
         public GroupService(IDbSettings settings)
         {

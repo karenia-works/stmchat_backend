@@ -35,7 +35,11 @@ namespace stmchat_backend.Controllers
             groupservice = _groupservice;
         }
 
-
+        [HttpGet("dbtest")]
+        public String dbtest()
+        {
+            return groupservice._groups.Count(Builders<ChatGroup>.Filter.Empty).ToString();
+        }
 
         [HttpGet("insert")]
         public async Task<String> insert()
