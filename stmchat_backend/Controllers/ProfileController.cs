@@ -111,7 +111,7 @@ namespace stmchat_backend.Controllers
             return Ok(profile);
         }
 
-        [HttpPost("{username}/friends")]
+        [HttpPost("{username}/friends/{friendname}")]
         public async Task<IActionResult> addFriend(string username, string friendname)
         {
             //var res = await _service.GetProfileByUsername(username);
@@ -135,7 +135,7 @@ namespace stmchat_backend.Controllers
             }
         }
 
-        [HttpDelete("{username}/friends")]
+        [HttpDelete("{username}/friends/{friendname}")]
         public async Task<IActionResult> deleteFriend(string username, string friendname)
         {
             //var res = await _service.GetProfileByUsername(username);
