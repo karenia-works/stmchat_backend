@@ -47,5 +47,14 @@ namespace stmchat_backend.Services
             var result = await _users.UpdateOneAsync(flicker, update);
             return result;
         }
+        public async Task<User> InsertUser(User user)
+        {
+            var tgt = await _users.AsQueryable().Where(o => o.Username == user.Username).FirstOrDefaultAsync();
+            if (tgt != null)
+                return null;
+            await _users.InsertOneAsync(user);
+            return user;
+
+        }
     }
 }

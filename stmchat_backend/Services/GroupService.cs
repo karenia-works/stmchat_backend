@@ -33,19 +33,15 @@ namespace stmchat_backend.Services
                 return null;
             }
 
-            await _groups.InsertOneAsync(creating);
-            var res = await _groups
-                .AsQueryable()
-                .Where(o => o.name == creating.name)
-                .FirstOrDefaultAsync();
             var chatlogid = ObjectId.GenerateNewId().ToString();
             creating.chatlog = chatlogid;
+            await _groups.InsertOneAsync(creating);
             var chatlogmake = new ChatLog()
             {
                 id = chatlogid
             };
             await _chatlogs.InsertOneAsync(chatlogmake);
-            return res;
+            return creating;
         }
 
         public async Task<ChatGroup> FindGroup(string groupName)
@@ -56,7 +52,7 @@ namespace stmchat_backend.Services
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<UpdateResult> AddGroup(string groupName, string user)
+        public async Task<UpdateResult> AddGroup(string user, string groupName)
         {
             var group = await _groups
                 .AsQueryable()
@@ -69,7 +65,7 @@ namespace stmchat_backend.Services
                 return null;
             }
 
-            var flicker = Builders<ChatGroup>.Filter.Eq("name", groupName);
+            var flicker = Builders<ChatGroup>.Filter.Eq(o => o.name, groupName);
             var update = Builders<ChatGroup>.Update.Push(o => o.members, user);
 
             return await _groups.UpdateOneAsync(flicker, update);
@@ -97,7 +93,9 @@ namespace stmchat_backend.Services
                 {
                     id = ObjectId.GenerateNewId().ToString(),
                     name = owner + "+" + passby,
-                    owner = owner
+                    owner = owner,
+                    members = new List<string>(),
+                    isFriend = true
 
                 };
 
@@ -111,7 +109,8 @@ namespace stmchat_backend.Services
                 {
                     id = ObjectId.GenerateNewId().ToString(),
                     name = passby + "+" + owner,
-                    owner = owner
+                    owner = owner,
+                    members = new List<string>()
 
                 };
 

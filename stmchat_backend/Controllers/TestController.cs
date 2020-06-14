@@ -28,11 +28,13 @@ namespace stmchat_backend.Controllers
         public ChatService chatservice;
         public ProfileService profileservice;
         public GroupService groupservice;
-        public TestController(ChatService _chatservice, ProfileService _profileservice, GroupService _groupservice)
+        public UserService userservice;
+        public TestController(ChatService _chatservice, ProfileService _profileservice, GroupService _groupservice, UserService _userservice)
         {
             chatservice = _chatservice;
             profileservice = _profileservice;
             groupservice = _groupservice;
+            userservice = _userservice;
         }
 
         [HttpGet("dbtest")]
@@ -46,20 +48,28 @@ namespace stmchat_backend.Controllers
         {
             var ms_wang = new Profile()
             {
-                Username = "wang"
+                Username = "wang",
+                Groups = new List<string>(),
+                Friends = new List<string>()
             };
             ms_wang.Groups.Add("kruodis");
             var ms_yang = new Profile()
             {
-                Username = "yang"
+                Username = "yang",
+                Groups = new List<string>(),
+                Friends = new List<string>()
             };
             var ms_li = new Profile()
             {
-                Username = "li"
+                Username = "li",
+                Groups = new List<string>(),
+                Friends = new List<string>()
             };
             var ms_he = new Profile()
             {
-                Username = "he"
+                Username = "he",
+                Groups = new List<string>(),
+                Friends = new List<string>()
             };
             await profileservice.CreateProfile(ms_wang);
             await profileservice.CreateProfile(ms_yang);
@@ -71,7 +81,7 @@ namespace stmchat_backend.Controllers
             await groupservice.MakeFriend("wang", "yang");
             var group1 = new ChatGroup()
             {
-                name = "kruodis",
+                name = "family",
                 isFriend = false,
                 owner = "wang",
                 describ = "wei are family",
@@ -79,11 +89,23 @@ namespace stmchat_backend.Controllers
             };
             group1.members.Add("wang");
             await groupservice.MakeGroup(group1);
-            await profileservice.AddUserGroup("he", "kruodis");
-            await groupservice.AddGroup("kurodis", "he");
-            await profileservice.AddUserGroup("li", "kruodis");
-            await groupservice.AddGroup("kurodis", "li");
+            await profileservice.AddUserGroup("he", "family");
+            await groupservice.AddGroup("he", "family");
+            await profileservice.AddUserGroup("li", "family");
+            await groupservice.AddGroup("li", "family");
+            await userservice.InsertUser(new Models.User() { Username = "wang", Password = "wang" });
+            await userservice.InsertUser(new Models.User() { Username = "yang", Password = "yang" });
+            await userservice.InsertUser(new Models.User() { Username = "li", Password = "li" });
+            await userservice.InsertUser(new Models.User() { Username = "he", Password = "he" });
             return "Ok";
+        }
+        [HttpDelete("killall")]
+        public String killall()
+        {
+            groupservice._chatlogs.DeleteMany(Builders<ChatLog>.Filter.Empty);
+            groupservice._groups.DeleteMany(Builders<ChatGroup>.Filter.Empty);
+            profileservice._profile.DeleteMany(Builders<Profile>.Filter.Empty);
+            return "hahahahaha";
         }
         [HttpGet("what")]
         public List<ChatLog> what()
@@ -109,13 +131,6 @@ namespace stmchat_backend.Controllers
 
         }
     }
-    public class basecase
-    {
 
-    }
-    [JsonDiscriminator("second")]
-    public class secondcase : basecase
-    {
-        public int i { get; set; }
-    }
+
 }

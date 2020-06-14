@@ -28,11 +28,12 @@ namespace stmchat_backend.Models
 
         public bool CheckPassword(string incoming)
         {
-            var key = Convert.FromBase64String(Key);
-            var hashed = new HMACSHA256(key).ComputeHash(new UTF8Encoding().GetBytes(incoming));
-            var realPassword = Convert.FromBase64String(Password);
-            Console.WriteLine(Convert.ToBase64String(hashed));
-            return SlowByteEq(realPassword, hashed);
+            // var key = Convert.FromBase64String(Key);
+            // var hashed = new HMACSHA256(key).ComputeHash(new UTF8Encoding().GetBytes(incoming));
+            // var realPassword = Convert.FromBase64String(Password);
+            // Console.WriteLine(Convert.ToBase64String(hashed));
+            // return SlowByteEq(realPassword, hashed);
+            return incoming == Password;
         }
 
         private static bool SlowByteEq(byte[] byteArray, byte[] other)
