@@ -1,7 +1,6 @@
 ﻿FROM node:lts-alpine as build
 
-RUN apt update
-RUN apt install -y git
+RUN apk add --no-cache git
 
 WORKDIR /app
 RUN git clone --depth=1 https://github.com/karenia-works/stmchat_frontend
