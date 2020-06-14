@@ -2,7 +2,7 @@
     root * /app
 
     log {
-        format console
+        format logfmt
     }
 
     @not_api {
