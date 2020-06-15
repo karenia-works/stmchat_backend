@@ -110,7 +110,7 @@ namespace stmchat_backend.Controllers
             return Ok(profile);
         }
 
-        [HttpPut("{username")]
+        [HttpPut("{username}")]
         public async Task<IActionResult> Put(string username, [FromBody] Profile profile)
         {
             var profileResult = await _service.GetProfileByUsername(username);
