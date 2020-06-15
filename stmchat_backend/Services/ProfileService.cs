@@ -84,6 +84,12 @@ namespace stmchat_backend.Services
             return await GetProfileByUsername(profile.Username);
         }
 
+        public async Task<Profile> EditProfile(string username, Profile newProfile)
+        {
+            await _profile.ReplaceOneAsync(p => p.Username == username, newProfile);
+            return await GetProfileByUsername(username);
+        }
+
         public async Task<UpdateResult> AddUserFriend(string username, string friendname)
         {
             var profile = await GetProfileByUsername(username);
@@ -101,6 +107,7 @@ namespace stmchat_backend.Services
             await _profile.UpdateOneAsync(flicker2, update2);
             return result;
         }
+
         public async Task<UpdateResult> AddUserGroup(string username, string groupname)
         {
             var profile = await GetProfileByUsername(username);
@@ -111,6 +118,7 @@ namespace stmchat_backend.Services
             var result = await _profile.UpdateOneAsync(flicker, update);
             return result;
         }
+
         public async Task<UpdateResult> DeleteUserFriend(string username, string friendname)
         {
             var profile = await GetProfileByUsername(username);

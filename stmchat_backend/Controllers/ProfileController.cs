@@ -21,7 +21,6 @@ namespace stmchat_backend.Controllers
         {
             _service = service;
             _groupService = groupService;
-
         }
 
         // 可能会因为用户名叫`me`而出错
@@ -111,6 +110,20 @@ namespace stmchat_backend.Controllers
             return Ok(profile);
         }
 
+        [HttpPut("{username")]
+        public async Task<IActionResult> Put(string username, [FromBody] Profile profile)
+        {
+            var profileResult = await _service.GetProfileByUsername(username);
+            if (profileResult == null)
+                return NotFound();
+            if (profile == null || profileResult.Id != profile.Id)
+                return BadRequest();
+            var res = await _service.EditProfile(username, profile);
+            if (res == null)
+                return BadRequest();
+            return Ok(res);
+        }
+
         [HttpPost("{username}/friends/{friendname}")]
         public async Task<IActionResult> addFriend(string username, string friendname)
         {
@@ -128,11 +141,8 @@ namespace stmchat_backend.Controllers
 
             if (tem == null)
                 return BadRequest("add friend error");
-            else
-            {
-                await _groupService.MakeFriend(username, friendname);
-                return Ok();
-            }
+            await _groupService.MakeFriend(username, friendname);
+            return Ok();
         }
 
         [HttpDelete("{username}/friends/{friendname}")]
@@ -151,8 +161,7 @@ namespace stmchat_backend.Controllers
             var tem = await _service.DeleteUserFriend(username, friendname);
             if (tem == null)
                 return BadRequest("delete friend error");
-            else
-                return Ok();
+            return Ok();
         }
     }
 }
