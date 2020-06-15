@@ -87,7 +87,7 @@ namespace stmchat_backend.Services
         public async Task<Profile> EditProfile(string username, Profile newProfile)
         {
             await _profile.ReplaceOneAsync(p => p.Username == username, newProfile);
-            return await GetProfileByUsername(username);
+            return await GetProfileByUsername(newProfile.Username);
         }
 
         public async Task<UpdateResult> AddUserFriend(string username, string friendname)
