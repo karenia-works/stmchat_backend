@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 services:
   stmchat_backend:
@@ -13,7 +13,6 @@ services:
       - ./data/:/app/data
     networks:
       - stmchat
-    
 
   stmchat_mongo:
     image: mongo:latest
@@ -22,7 +21,7 @@ services:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: ExaMp1ePa55w02d
     ports:
-      -  "27017:27017"
+      - "27017:27017"
     volumes:
       - mongo_data:/data/db
     networks:
@@ -31,25 +30,29 @@ services:
   stmchat_frontend:
     image: stmchat_frontend
     restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      #   - .:/etc/caddy/
+      - ./data/:/app/data
     build:
       context: "."
       dockerfile: "frontend.Dockerfile"
     networks:
       - stmchat
 
-  stmchat_nginx:
-    image: nginx:stable
-    restart: always
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginxconf:/etc/nginx/conf.d
-      - ./data:/data
-    networks:
-      - stmchat
-    
-      
+  # stmchat_nginx:
+  #   image: nginx:stable
+  #   restart: always
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginxconf:/etc/nginx/conf.d
+  #   networks:
+  #     - stmchat
+
 volumes:
   mongo_data:
 
