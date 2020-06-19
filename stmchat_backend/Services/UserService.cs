@@ -5,7 +5,7 @@ using MongoDB.Driver.Linq;
 using System.Collections.Generic;
 using stmchat_backend.Models.Settings;
 using System.Threading.Tasks;
-
+using Microsoft.AspNetCore.Mvc;
 
 //同Userservice
 namespace stmchat_backend.Services

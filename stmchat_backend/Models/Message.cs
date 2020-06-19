@@ -25,15 +25,15 @@ namespace stmchat_backend.Models
 
     }
     [JsonDiscriminator("TextMsg")]
-    // [BsonDiscriminator("TextMsg")]
+    [BsonDiscriminator("TextMsg")]
     public class TextMsg : SendMessage
     {
 
         [BsonIgnoreIfNull]
         public string text { get; set; }
     }
-
-    [BsonDiscriminator("file")]
+    [JsonDiscriminator("FileMsg")]
+    [BsonDiscriminator("FileMSg")]
     public class FileMsg : SendMessage
     {
         public string file { get; set; }
@@ -42,7 +42,8 @@ namespace stmchat_backend.Models
         public string caption { get; set; }//图片下面配文字
         public int size { get; set; }
     }
-    [JsonDiscriminator("image")]
+    [JsonDiscriminator("ImageMsg")]
+    [BsonDiscriminator("ImageMsg")]
     public class ImageMsg : SendMessage
     {
         public string image { get; set; }
@@ -55,26 +56,27 @@ namespace stmchat_backend.Models
         public string chatId { get; set; }
         public string msgId { get; set; }
     }
+    [BsonKnownTypes(typeof(RTextMsg), typeof(RImageMsg), typeof(RFileMsg))]
     public class RecvMessage
     {
 
         [BsonRepresentation(BsonType.ObjectId)]
         public string replyTo { get; set; }
     }
-    [JsonDiscriminator("text")]
+    [JsonDiscriminator("RTextMsg")]
     public class RTextMsg : RecvMessage
     {
         public string text { get; set; }
     }
 
-    [JsonDiscriminator("image")]
+    [JsonDiscriminator("RImageMsg")]
     public class RImageMsg : RecvMessage
     {
         public string Image { get; set; }
         public string Caption { get; set; }
     }
 
-    [JsonDiscriminator("file")]
+    [JsonDiscriminator("RFileMsg")]
     public class RFileMsg : RecvMessage
     {
         public string file { get; set; }
@@ -82,7 +84,7 @@ namespace stmchat_backend.Models
         public string caption { get; set; }
         public int size { get; set; }
     }
-    [JsonDiscriminator("forward")]
+    [JsonDiscriminator("RForwatdMsg")]
     public class RForwardMsg : RecvMessage
     {
         public string fromChatId { get; set; }
@@ -90,13 +92,13 @@ namespace stmchat_backend.Models
     }
     public class WsSendMsg
     {
-        [BsonRepresentation(BsonType.ObjectId)]
+        // [BsonRepresentation(BsonType.ObjectId)]
         public string chatId { get; set; }
         public SendMessage msg { get; set; }
     }
     public class WsRecvMsg
     {
-        [BsonRepresentation(BsonType.ObjectId)]
+        //  [BsonRepresentation(BsonType.ObjectId)]
         public string chatId { get; set; }
         public RecvMessage msg { get; set; }
     }

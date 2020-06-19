@@ -106,7 +106,7 @@ namespace stmchat_backend
             {
                 policy.AllowAnyHeader()
                     .AllowAnyMethod()
-                    .WithOrigins(new[] {"https://postwoman.io"});
+                    .WithOrigins(new[] { "https://postwoman.io" });
             });
             var webSocketOptions = new WebSocketOptions();
             webSocketOptions.AllowedOrigins.Add("https://postwoman.io");
@@ -138,11 +138,12 @@ namespace stmchat_backend
 
             app.Use(async (ctx, next) =>
             {
-                if (ctx.Request.Path.ToString().Split('/')[0] == "ws")
+                //Console.WriteLine(ctx.Request.Path.ToString().Split('/')[2]);
+                if (ctx.Request.Path.ToString().Split('/')[1] == "ws")
                 {
                     if (ctx.WebSockets.IsWebSocketRequest)
                     {
-                        var name = ctx.Request.Path.ToString().Split('/')[1];
+                        var name = ctx.Request.Path;
                         var socket = await ctx.WebSockets.AcceptWebSocketAsync();
                         var jsonConfig = new JsonSerializerOptions();
                         ConfigJsonOptions(jsonConfig);
@@ -188,6 +189,9 @@ namespace stmchat_backend
             registry.RegisterType<TextMsg>();
             registry.RegisterType<FileMsg>();
             registry.RegisterType<ImageMsg>();
+            registry.RegisterType<RTextMsg>();
+            registry.RegisterType<RImageMsg>();
+            registry.RegisterType<RFileMsg>();
             registry.DiscriminatorPolicy = DiscriminatorPolicy.Always;
 
             options.IgnoreNullValues = true;

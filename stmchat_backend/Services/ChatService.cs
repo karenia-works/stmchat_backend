@@ -39,13 +39,15 @@ namespace stmchat_backend
             var client = new MongoClient(settings.DbConnection);
             var _database = client.GetDatabase(settings.DbName);
             _chatlog = _database.GetCollection<ChatLog>(settings.ChatLogCollectionName);
-
+            _groups = _database.GetCollection<ChatGroup>(settings.ChatGroupCollectionName);
             Wsmap = new Dictionary<string, JsonWebsocketWrapper<WsRecvMsg, WsSendMsg>>();
+            notreadmap = new Dictionary<string, Dictionary<string, int>>();
         }
         public async Task<JsonWebsocketWrapper<WsRecvMsg, WsSendMsg>> Addsocket(String name, WebSocket webSocket, JsonSerializerOptions jsonSerializer)
         {
 
             var tgt = new JsonWebsocketWrapper<WsRecvMsg, WsSendMsg>(webSocket, jsonSerializer);
+
             Wsmap.Add(name, tgt);
             var unread = await getUnreadMsg(name);
             if (unread.Count != 0)
@@ -65,12 +67,15 @@ namespace stmchat_backend
         }
         public async void dealMsg(string name, WsRecvMsg recv)
         {
+            Console.WriteLine(recv.msg.GetType());
+
             var groupId = recv.chatId;
-            var group = await FindGroupMember(groupId);
+            var group = await FindGroup(groupId);
             var groupname = group.chatlog;
             var members = group.members;
             var logid = group.chatlog;
             var msg = TransWsMsg(name, recv);
+
             InsertChat(logid, msg);
             foreach (var men in members)
             {
@@ -102,6 +107,10 @@ namespace stmchat_backend
         public async Task<List<WsSendMsg>> getUnreadMsg(string name)
         {
             var allunread = new List<WsSendMsg>();
+            if (notreadmap.ContainsKey(name) == false)
+            {
+                notreadmap.Add(name, new Dictionary<string, int>());
+            }
 
             var unreads = notreadmap[name];
             foreach (var item in unreads)
@@ -114,7 +123,9 @@ namespace stmchat_backend
         }
         public WsSendMsg TransWsMsg(string name, WsRecvMsg rwsmsg)
         {
-            var tgt = TransMsg(name, rwsmsg.msg);
+            SendMessage tgt = null;
+            if (rwsmsg.msg.GetType() == typeof(RTextMsg))
+                tgt = TransMsg(name, rwsmsg.msg as RTextMsg);
             var swsmsg = new WsSendMsg()
             {
                 chatId = rwsmsg.chatId,
@@ -126,8 +137,9 @@ namespace stmchat_backend
         {
             return new SendMessage();
         }
-        public SendMessage TransMsg(string name, RTextMsg tgt)
+        public TextMsg TransMsg(string name, RTextMsg tgt)
         {
+            Console.WriteLine("is text");
             var msg = new TextMsg()
             {
                 id = ObjectId.GenerateNewId().ToString(),
@@ -150,15 +162,8 @@ namespace stmchat_backend
                 await item.SendMessage(Message);
             }
         }
-        public async void LogInsert(string log, WsSendMsg tgt)
-        {
-            var flicker = Builders<ChatLog>.Filter.Eq("name", log);
-            var update = Builders<ChatLog>.Update.Push("messages", tgt.msg);
 
-            await _chatlog.UpdateOneAsync(flicker, update);
-
-        }
-        public async Task<ChatGroup> FindGroupMember(string groupname)
+        public async Task<ChatGroup> FindGroup(string groupname)
         {
             var tgt = await _groups.AsQueryable().Where(o => o.name == groupname).FirstOrDefaultAsync();
             return tgt;

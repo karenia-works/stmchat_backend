@@ -38,7 +38,8 @@ namespace stmchat_backend.Services
             await _groups.InsertOneAsync(creating);
             var chatlogmake = new ChatLog()
             {
-                id = chatlogid
+                id = chatlogid,
+                messages = new List<WsSendMsg>()
             };
             await _chatlogs.InsertOneAsync(chatlogmake);
             return creating;

@@ -16,11 +16,13 @@ namespace stmchat_backend.Controllers
     {
         private readonly ProfileService _service;
         private GroupService _groupService;
+        private UserService _userService;
 
-        public ProfileController(ProfileService service, GroupService groupService)
+        public ProfileController(ProfileService service, GroupService groupService, UserService userService)
         {
             _service = service;
             _groupService = groupService;
+            _userService = userService;
         }
 
         // 可能会因为用户名叫`me`而出错
@@ -73,7 +75,16 @@ namespace stmchat_backend.Controllers
 
             return Ok(res);
         }
-
+        [HttpPost("register")]
+        public async Task<IActionResult> register([FromBody] User user)
+        {
+            var res = await _userService.InsertUser(user);
+            if (res == null)
+            {
+                BadRequest();
+            }
+            return Ok(user);
+        }
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] Profile profile)
         {

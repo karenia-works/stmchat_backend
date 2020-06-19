@@ -36,7 +36,19 @@ namespace stmchat_backend.Controllers
             groupservice = _groupservice;
             userservice = _userservice;
         }
-
+        [HttpGet("msgexp")]
+        public WsRecvMsg msgexp()
+        {
+            var tgt = new WsRecvMsg()
+            {
+                chatId = "family",
+                msg = new RTextMsg()
+                {
+                    text = "fill"
+                }
+            };
+            return tgt;
+        }
         [HttpGet("dbtest")]
         public String dbtest()
         {
