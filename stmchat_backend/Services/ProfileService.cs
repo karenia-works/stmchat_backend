@@ -11,7 +11,7 @@ namespace stmchat_backend.Services
     //针对用户信息的增删改查，暂不考虑聊天相关
     public class ProfileService
     {
-        private readonly IMongoCollection<Profile> _profile;
+        public IMongoCollection<Profile> _profile;
         private readonly IMongoCollection<ChatGroup> _group;
 
         public ProfileService(IDbSettings settings)
@@ -84,6 +84,12 @@ namespace stmchat_backend.Services
             return await GetProfileByUsername(profile.Username);
         }
 
+        public async Task<Profile> EditProfile(string username, Profile newProfile)
+        {
+            await _profile.ReplaceOneAsync(p => p.Username == username, newProfile);
+            return await GetProfileByUsername(newProfile.Username);
+        }
+
         public async Task<UpdateResult> AddUserFriend(string username, string friendname)
         {
             var profile = await GetProfileByUsername(username);
@@ -92,8 +98,16 @@ namespace stmchat_backend.Services
             var update = Builders<Profile>
                 .Update.Set("Friends", profile.Friends);
             var result = await _profile.UpdateOneAsync(flicker, update);
+            //reverse
+            var profile2 = await GetProfileByUsername(friendname);
+            profile2.Friends.Add(username);
+            var flicker2 = Builders<Profile>.Filter.Eq("Username", friendname);
+            var update2 = Builders<Profile>
+                .Update.Set("Friends", profile2.Friends);
+            await _profile.UpdateOneAsync(flicker2, update2);
             return result;
         }
+
         public async Task<UpdateResult> AddUserGroup(string username, string groupname)
         {
             var profile = await GetProfileByUsername(username);
@@ -104,6 +118,7 @@ namespace stmchat_backend.Services
             var result = await _profile.UpdateOneAsync(flicker, update);
             return result;
         }
+
         public async Task<UpdateResult> DeleteUserFriend(string username, string friendname)
         {
             var profile = await GetProfileByUsername(username);
@@ -112,6 +127,13 @@ namespace stmchat_backend.Services
             var update = Builders<Profile>
                 .Update.Set("Friends", profile.Friends);
             var result = await _profile.UpdateOneAsync(flicker, update);
+            //reveres
+            var profile2 = await GetProfileByUsername(friendname);
+            profile2.Friends.Remove(username);
+            var flicker2 = Builders<Profile>.Filter.Eq("Username", friendname);
+            var update2 = Builders<Profile>
+                .Update.Set("Friends", profile2.Friends);
+            var result2 = await _profile.UpdateOneAsync(flicker2, update2);
             return result;
         }
 

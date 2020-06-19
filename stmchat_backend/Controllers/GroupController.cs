@@ -8,23 +8,29 @@ using stmchat_backend.Models;
 using stmchat_backend.Services;
 using MongoDB.Bson;
 using System.Collections.Generic;
+
 namespace stmchat_backend.Controllers
 {
+    [Route("api/v1/[controller]")]
+    [ApiController]
     public class GroupController : ControllerBase
     {
         public GroupService groupservice;
         public ProfileService profileservice;
+
         public GroupController(GroupService _groupservice, ProfileService _profileservice)
         {
             groupservice = _groupservice;
             profileservice = _profileservice;
         }
+
         [HttpGet("{name}")]
         public async Task<ChatGroup> FindGroup(string name)
         {
             return await groupservice.FindGroup(name);
         }
-        [Authorize(IdentityServerConstants.LocalApi.PolicyName)]
+
+        //[Authorize(IdentityServerConstants.LocalApi.PolicyName)]
         [HttpPost]
         public async Task<string> MakeGroup([FromBody] ChatGroup tgt)
         {
@@ -33,20 +39,21 @@ namespace stmchat_backend.Controllers
             await groupservice.MakeGroup(tgt);
             return "ok";
         }
-        [HttpPatch("{name}")]
-        public async Task<string> AddGroup(string name)
+
+        [HttpPut("{user}/add/{name}")]
+        public async Task<string> AddGroup(string user, string name)
         {
-            var user = User.Claims.Where(Clame => Clame.Type == "Name").FirstOrDefault().Value;
+            //var user = User.Claims.Where(Clame => Clame.Type == "Name").FirstOrDefault().Value;
             await profileservice.AddUserGroup(user, name);
             await groupservice.AddGroup(name, user);
             return "ok";
         }
-        [Authorize(IdentityServerConstants.LocalApi.PolicyName)]
-        [HttpPost("{name}")]
-        public async Task<string> MakeFriend(string name)
-        {
 
-            var user = User.Claims.Where(Clame => Clame.Type == "Name").FirstOrDefault().Value;
+        //[Authorize(IdentityServerConstants.LocalApi.PolicyName)]
+        [HttpPost("{user}/makefriend/{name}")]
+        public async Task<string> MakeFriend(string user, string name)
+        {
+            // var user = User.Claims.Where(Clame => Clame.Type == "Name").FirstOrDefault().Value;
 
             var chat = new ChatGroup()
             {
@@ -54,32 +61,13 @@ namespace stmchat_backend.Controllers
                 name = name + user,
                 owner = user,
                 isFriend = false
-
             };
             chat.members.Add(name);
             chat.members.Add(user);
             await groupservice.MakeGroup(chat);
             return "ok";
         }
+
         //test
-        [HttpPost("{name}/{you}")]
-        public async Task<string> TMakeFriend(string name, string you)
-        {
-
-            var user = User.Claims.Where(Clame => Clame.Type == "Name").FirstOrDefault().Value;
-
-            var chat = new ChatGroup()
-            {
-                id = ObjectId.GenerateNewId().ToString(),
-                name = name + user,
-                owner = user,
-                isFriend = false
-
-            };
-            chat.members.Add(name);
-            chat.members.Add(user);
-            await groupservice.MakeGroup(chat);
-            return "ok";
-        }
     }
 }

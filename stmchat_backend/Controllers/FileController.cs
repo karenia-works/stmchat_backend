@@ -30,7 +30,7 @@ namespace stmchat_backend.Controllers
                 return NotFound();
             }
 
-            return Ok(fileId);
+            return Ok(res);
         }
 
         [HttpPost, DisableRequestSizeLimit]

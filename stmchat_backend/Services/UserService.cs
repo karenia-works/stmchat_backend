@@ -5,7 +5,7 @@ using MongoDB.Driver.Linq;
 using System.Collections.Generic;
 using stmchat_backend.Models.Settings;
 using System.Threading.Tasks;
-
+using Microsoft.AspNetCore.Mvc;
 
 //同Userservice
 namespace stmchat_backend.Services
@@ -46,6 +46,15 @@ namespace stmchat_backend.Services
                 .Set("password", user.Password);
             var result = await _users.UpdateOneAsync(flicker, update);
             return result;
+        }
+        public async Task<User> InsertUser(User user)
+        {
+            var tgt = await _users.AsQueryable().Where(o => o.Username == user.Username).FirstOrDefaultAsync();
+            if (tgt != null)
+                return null;
+            await _users.InsertOneAsync(user);
+            return user;
+
         }
     }
 }

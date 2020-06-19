@@ -98,23 +98,25 @@ namespace stmchat_backend
             app.UseRouting();
 
 
-            app.UseIdentityServer();
-            app.UseAuthentication();
-            app.UseAuthorization();
+            // app.UseIdentityServer();
+            // app.UseAuthentication();
+            // app.UseAuthorization();
 
             app.UseCors(policy =>
             {
                 policy.AllowAnyHeader()
                     .AllowAnyMethod()
-                    .WithOrigins(new[] {"https://postwoman.io"});
+                    .WithOrigins(new[] { "https://postwoman.io" });
             });
             var webSocketOptions = new WebSocketOptions();
+
             webSocketOptions.AllowedOrigins.Add("https://postwoman.io");
+            webSocketOptions.AllowedOrigins.Add("https://localhost:8080");
             app.UseWebSockets(webSocketOptions);
 
             app.Use(async (context, next) =>
             {
-                if (context.WebSockets.IsWebSocketRequest || context.Request.Path.Value.Split('/')[0] == "/ws")
+                if (context.WebSockets.IsWebSocketRequest || context.Request.Path.Value.Split('/')[1] == "/ws")
                 {
                     var websocket = await context.WebSockets.AcceptWebSocketAsync();
                     ChatService _chatservice;
@@ -124,10 +126,11 @@ namespace stmchat_backend
                     }
 
                     var tmp = context.Request.Path;
-                    var id = tmp.Value.Split('/')[1];
+                    var name = tmp.Value.Split('/')[2];
                     var jsonoption = new JsonSerializerOptions();
                     ConfigJsonOptions(jsonoption);
-                    var ws = await _chatservice.Addsocket(id, websocket, jsonoption);
+                    Console.WriteLine(name);
+                    var ws = await _chatservice.Addsocket(name, websocket, jsonoption);
                     await ws.WaitUntilClose();
                 }
                 else
@@ -136,34 +139,6 @@ namespace stmchat_backend
                 }
             });
 
-            app.Use(async (ctx, next) =>
-            {
-                if (ctx.Request.Path.ToString().Split('/')[0] == "ws")
-                {
-                    if (ctx.WebSockets.IsWebSocketRequest)
-                    {
-                        var name = ctx.Request.Path.ToString().Split('/')[1];
-                        var socket = await ctx.WebSockets.AcceptWebSocketAsync();
-                        var jsonConfig = new JsonSerializerOptions();
-                        ConfigJsonOptions(jsonConfig);
-                        using (var scope = ctx.RequestServices.CreateScope())
-                        {
-                            var chatservice = scope.ServiceProvider.GetService<ChatService>();
-                            chatservice.Addsocket(name, socket, jsonConfig);
-                        }
-                    }
-                    else
-                    {
-                        ctx.Response.StatusCode = 400;
-                        await ctx.Response.Body.WriteAsync(
-                            System.Text.Encoding.UTF8.GetBytes("Not a websocket request!"));
-                    }
-                }
-                else
-                {
-                    await next();
-                }
-            });
 
             // File and Image
             app.UseFileServer(new FileServerOptions
@@ -188,6 +163,9 @@ namespace stmchat_backend
             registry.RegisterType<TextMsg>();
             registry.RegisterType<FileMsg>();
             registry.RegisterType<ImageMsg>();
+            registry.RegisterType<RTextMsg>();
+            registry.RegisterType<RImageMsg>();
+            registry.RegisterType<RFileMsg>();
             registry.DiscriminatorPolicy = DiscriminatorPolicy.Always;
 
             options.IgnoreNullValues = true;
