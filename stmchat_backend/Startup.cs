@@ -111,6 +111,7 @@ namespace stmchat_backend
             var webSocketOptions = new WebSocketOptions();
 
             webSocketOptions.AllowedOrigins.Add("https://postwoman.io");
+            webSocketOptions.AllowedOrigins.Add("https://localhost:8080");
             app.UseWebSockets(webSocketOptions);
 
             app.Use(async (context, next) =>
