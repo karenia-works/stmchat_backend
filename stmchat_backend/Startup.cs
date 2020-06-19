@@ -98,9 +98,9 @@ namespace stmchat_backend
             app.UseRouting();
 
 
-            app.UseIdentityServer();
-            app.UseAuthentication();
-            app.UseAuthorization();
+            // app.UseIdentityServer();
+            // app.UseAuthentication();
+            // app.UseAuthorization();
 
             app.UseCors(policy =>
             {
@@ -109,6 +109,7 @@ namespace stmchat_backend
                     .WithOrigins(new[] { "https://postwoman.io" });
             });
             var webSocketOptions = new WebSocketOptions();
+
             webSocketOptions.AllowedOrigins.Add("https://postwoman.io");
             app.UseWebSockets(webSocketOptions);
 
