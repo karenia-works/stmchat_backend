@@ -1,9 +1,7 @@
 :80, :443 {
     root * /app
 
-    log {
-        format logfmt
-    }
+    log 
 
     @not_api {
         not {
@@ -13,6 +11,14 @@
     
     @api {
         path /api/* /connect/* /ws/*
+    }
+    
+    route /file/* {
+        uri strip_prefix /file
+        root * /app/data
+        file_server {
+            browse
+        }
     }
 
     reverse_proxy @api {
