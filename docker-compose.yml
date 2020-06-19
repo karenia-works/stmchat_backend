@@ -13,8 +13,7 @@ services:
       - ./data/:/app/data
     networks:
       - stmchat
-    depends_on:
-      - stmchat_mongo
+    
 
   stmchat_mongo:
     image: mongo:latest
@@ -49,10 +48,7 @@ services:
       - ./data:/data
     networks:
       - stmchat
-    depends_on:
-      - stmchat_mongo
-      - stmchat_backend
-      - stmchat_frontend
+    
       
 volumes:
   mongo_data:
