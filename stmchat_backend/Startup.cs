@@ -114,7 +114,7 @@ namespace stmchat_backend
 
             app.Use(async (context, next) =>
             {
-                if (context.WebSockets.IsWebSocketRequest || context.Request.Path.Value.Split('/')[0] == "/ws")
+                if (context.WebSockets.IsWebSocketRequest || context.Request.Path.Value.Split('/')[1] == "/ws")
                 {
                     var websocket = await context.WebSockets.AcceptWebSocketAsync();
                     ChatService _chatservice;
@@ -124,10 +124,11 @@ namespace stmchat_backend
                     }
 
                     var tmp = context.Request.Path;
-                    var id = tmp.Value.Split('/')[1];
+                    var name = tmp.Value.Split('/')[2];
                     var jsonoption = new JsonSerializerOptions();
                     ConfigJsonOptions(jsonoption);
-                    var ws = await _chatservice.Addsocket(id, websocket, jsonoption);
+                    Console.WriteLine(name);
+                    var ws = await _chatservice.Addsocket(name, websocket, jsonoption);
                     await ws.WaitUntilClose();
                 }
                 else
@@ -136,35 +137,6 @@ namespace stmchat_backend
                 }
             });
 
-            app.Use(async (ctx, next) =>
-            {
-                //Console.WriteLine(ctx.Request.Path.ToString().Split('/')[2]);
-                if (ctx.Request.Path.ToString().Split('/')[1] == "ws")
-                {
-                    if (ctx.WebSockets.IsWebSocketRequest)
-                    {
-                        var name = ctx.Request.Path;
-                        var socket = await ctx.WebSockets.AcceptWebSocketAsync();
-                        var jsonConfig = new JsonSerializerOptions();
-                        ConfigJsonOptions(jsonConfig);
-                        using (var scope = ctx.RequestServices.CreateScope())
-                        {
-                            var chatservice = scope.ServiceProvider.GetService<ChatService>();
-                            chatservice.Addsocket(name, socket, jsonConfig);
-                        }
-                    }
-                    else
-                    {
-                        ctx.Response.StatusCode = 400;
-                        await ctx.Response.Body.WriteAsync(
-                            System.Text.Encoding.UTF8.GetBytes("Not a websocket request!"));
-                    }
-                }
-                else
-                {
-                    await next();
-                }
-            });
 
             // File and Image
             app.UseFileServer(new FileServerOptions
