@@ -24,6 +24,7 @@ using stmchat_backend.Models.Settings;
 
 using MongoDB.Driver.Linq;
 using Microsoft.Extensions.Logging;
+using System.Threading;
 
 namespace stmchat_backend
 {
@@ -53,9 +54,16 @@ namespace stmchat_backend
 
         public async Task<JsonWebsocketWrapper<WsRecvMsg, WsSendMsg>> Addsocket(String name, WebSocket webSocket, JsonSerializerOptions jsonSerializer)
         {
-
             var tgt = new JsonWebsocketWrapper<WsRecvMsg, WsSendMsg>(webSocket, jsonSerializer);
 
+            if (WsCastMap.ContainsKey(name))
+            {
+                string message = $"WsCastMap already contains name {name}, please recheck!";
+                logger.LogWarning(message);
+                await webSocket.CloseAsync(WebSocketCloseStatus.EndpointUnavailable, message, CancellationToken.None);
+                throw new Exception();
+            }
+            logger.LogInformation($"Added {name} into WsCastMap");
             WsCastMap.Add(name, tgt);
             var unread = await getUnreadMsg(name);
             if (unread.Count != 0)
@@ -66,14 +74,19 @@ namespace stmchat_backend
                 }
             }
             {
-                var unreadMsg = await GetAllUnreadCountOfUser(name);
-                await tgt.SendMessage(new WsSendUnreadCountMsg() { items = unreadMsg });
+                // var unreadMsg = await GetAllUnreadCountOfUser(name);
+                // await tgt.SendMessage(new WsSendUnreadCountMsg() { items = unreadMsg });
             }
             tgt.Messages.Subscribe(
                 (msg) => { DealMsg(name, msg); },
                 (err) => { Console.WriteLine("err: {0}", err); },
-                () => { WsCastMap.Remove(name); });
+                () => { WsCastMap.Remove(name); this.OnUserGoingOffline(name); });
             return tgt;
+        }
+
+        private async void OnUserGoingOffline(string username)
+        {
+            logger.LogInformation($"User {username} goes offline");
         }
 
         public async void DealMsg(string name, WsRecvMsg recv)

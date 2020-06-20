@@ -112,6 +112,7 @@ namespace stmchat_backend
 
             webSocketOptions.AllowedOrigins.Add("https://postwoman.io");
             webSocketOptions.AllowedOrigins.Add("https://localhost:8080");
+            webSocketOptions.AllowedOrigins.Add("*");
             app.UseWebSockets(webSocketOptions);
 
             app.Use(async (context, next) =>
@@ -130,8 +131,12 @@ namespace stmchat_backend
                     var tmp = context.Request.Path;
                     var jsonoption = new JsonSerializerOptions();
                     ConfigJsonOptions(jsonoption);
-                    var ws = await _chatservice.Addsocket(username, websocket, jsonoption);
-                    await ws.WaitUntilClose();
+                    try
+                    {
+                        var ws = await _chatservice.Addsocket(username, websocket, jsonoption);
+                        await ws.WaitUntilClose();
+                    }
+                    catch (Exception e) { Console.WriteLine(e); return; }
                 }
                 else
                 {
@@ -167,6 +172,11 @@ namespace stmchat_backend
             registry.RegisterType<RImageMsg>();
             registry.RegisterType<RFileMsg>();
             registry.RegisterType<RForwardMsg>();
+            registry.RegisterType<WsSendChatMsg>();
+            registry.RegisterType<WsSendOnlineStatusMsg>();
+            registry.RegisterType<WsSendUnreadCountMsg>();
+            registry.RegisterType<WsRecvChatMsg>();
+            registry.RegisterType<WsRecvReadPositionMsg>();
             registry.DiscriminatorPolicy = DiscriminatorPolicy.Always;
 
             options.IgnoreNullValues = true;

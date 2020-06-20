@@ -45,6 +45,11 @@ namespace stmchat_backend.Helpers
         {
             while (true)
             {
+                if (this.socket.State == WebSocketState.Closed)
+                {
+                    this.Messages.OnCompleted();
+                    return;
+                }
                 var result = await this.socket.ReceiveAsync(new ArraySegment<byte>(recvBuffer), this.closeToken);
                 var writtenBytes = 0;
                 while (!result.EndOfMessage)
@@ -81,6 +86,11 @@ namespace stmchat_backend.Helpers
                         return;
                 }
             }
+        }
+
+        public async Task Close(WebSocketCloseStatus status, string message, CancellationToken cancellation)
+        {
+            await this.socket.CloseAsync(status, message, cancellation);
         }
 
         public async Task WaitUntilClose()
