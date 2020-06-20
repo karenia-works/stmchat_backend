@@ -119,7 +119,7 @@ namespace stmchat_backend
                 var scanUsernameResult = pathReg.Match(context.Request.Path.Value);
                 if (scanUsernameResult.Success)
                 {
-                    var username = scanUsernameResult.Captures[0].Value;
+                    var username = scanUsernameResult.Groups["name"].Value;
                     var websocket = await context.WebSockets.AcceptWebSocketAsync();
                     ChatService _chatservice;
                     using (var scope = context.RequestServices.CreateScope())
@@ -130,7 +130,6 @@ namespace stmchat_backend
                     var tmp = context.Request.Path;
                     var jsonoption = new JsonSerializerOptions();
                     ConfigJsonOptions(jsonoption);
-                    Console.WriteLine(username);
                     var ws = await _chatservice.Addsocket(username, websocket, jsonoption);
                     await ws.WaitUntilClose();
                 }
@@ -174,6 +173,6 @@ namespace stmchat_backend
             options.AllowTrailingCommas = true;
             options.ReadCommentHandling = JsonCommentHandling.Skip;
         }
-        static readonly Regex pathReg = new Regex("^/ws/([^/]+)$");
+        static readonly Regex pathReg = new Regex("^/ws/(?<name>[^/]+)$");
     }
 }
