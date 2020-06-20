@@ -17,12 +17,14 @@ namespace stmchat_backend.Controllers
         private readonly ProfileService _service;
         private GroupService _groupService;
         private UserService _userService;
+        private ChatService _chatService;
 
-        public ProfileController(ProfileService service, GroupService groupService, UserService userService)
+        public ProfileController(ProfileService service, GroupService groupService, UserService userService, ChatService chatService)
         {
             _service = service;
             _groupService = groupService;
             _userService = userService;
+            _chatService = chatService;
         }
 
         // 可能会因为用户名叫`me`而出错
@@ -44,6 +46,10 @@ namespace stmchat_backend.Controllers
         public async Task<IActionResult> GetProfile(string username)
         {
             var res = await _service.GetProfileByUsername(username);
+            if (_chatService.WsCastMap.ContainsKey(username))
+                res.state = true;
+            else
+                res.state = false;
             if (res == null)
             {
                 return NotFound();

@@ -96,7 +96,7 @@ namespace stmchat_backend.Controllers
                 name = "family",
                 isFriend = false,
                 owner = "wang",
-                describ = "wei are family",
+                describe = "wei are family",
                 members = new List<string>()
             };
             group1.members.Add("wang");

@@ -17,6 +17,8 @@ namespace stmchat_backend.Models
         public string Email { set; get; }
         public string Username { set; get; }
         public string AvatarUrl { set; get; }
+        [BsonIgnore]
+        public bool state { get; set; }
         public List<string> Friends { set; get; }
         public List<string> Groups { set; get; }
     }
