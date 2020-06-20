@@ -24,16 +24,16 @@ namespace stmchat_backend.Models
 
 
     }
-    [JsonDiscriminator("TextMsg")]
-    [BsonDiscriminator("TextMsg")]
+    [JsonDiscriminator("text_s")]
+    [BsonDiscriminator("text_s")]
     public class TextMsg : SendMessage
     {
 
         [BsonIgnoreIfNull]
         public string text { get; set; }
     }
-    [JsonDiscriminator("FileMsg")]
-    [BsonDiscriminator("FileMSg")]
+    [JsonDiscriminator("file_s")]
+    [BsonDiscriminator("file_s")]
     public class FileMsg : SendMessage
     {
         public string file { get; set; }
@@ -42,8 +42,8 @@ namespace stmchat_backend.Models
         public string caption { get; set; }//图片下面配文字
         public int size { get; set; }
     }
-    [JsonDiscriminator("ImageMsg")]
-    [BsonDiscriminator("ImageMsg")]
+    [JsonDiscriminator("image_s")]
+    [BsonDiscriminator("image_s")]
     public class ImageMsg : SendMessage
     {
         public string image { get; set; }
@@ -63,20 +63,20 @@ namespace stmchat_backend.Models
         [BsonRepresentation(BsonType.ObjectId)]
         public string replyTo { get; set; }
     }
-    [JsonDiscriminator("RTextMsg")]
+    [JsonDiscriminator("text")]
     public class RTextMsg : RecvMessage
     {
         public string text { get; set; }
     }
 
-    [JsonDiscriminator("RImageMsg")]
+    [JsonDiscriminator("image")]
     public class RImageMsg : RecvMessage
     {
         public string Image { get; set; }
         public string Caption { get; set; }
     }
 
-    [JsonDiscriminator("RFileMsg")]
+    [JsonDiscriminator("file")]
     public class RFileMsg : RecvMessage
     {
         public string file { get; set; }
@@ -84,7 +84,7 @@ namespace stmchat_backend.Models
         public string caption { get; set; }
         public int size { get; set; }
     }
-    [JsonDiscriminator("RForwatdMsg")]
+    [JsonDiscriminator("forward")]
     public class RForwardMsg : RecvMessage
     {
         public string fromChatId { get; set; }
