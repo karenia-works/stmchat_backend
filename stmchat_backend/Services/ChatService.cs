@@ -33,6 +33,7 @@ namespace stmchat_backend
         public Dictionary<string, Dictionary<string, int>> notreadmap;//人，群
         public IMongoCollection<ChatLog> _chatlog;
         private IMongoCollection<ChatGroup> _groups;
+
         public ChatService(IDbSettings settings)
         {
 
@@ -43,6 +44,7 @@ namespace stmchat_backend
             Wsmap = new Dictionary<string, JsonWebsocketWrapper<WsRecvMsg, WsSendMsg>>();
             notreadmap = new Dictionary<string, Dictionary<string, int>>();
         }
+        
         public async Task<JsonWebsocketWrapper<WsRecvMsg, WsSendMsg>> Addsocket(String name, WebSocket webSocket, JsonSerializerOptions jsonSerializer)
         {
 
@@ -62,9 +64,8 @@ namespace stmchat_backend
                            (err) => { Console.WriteLine("err: {0}", err); },
                            () => { Wsmap.Remove(name); });
             return tgt;
-
-
         }
+        
         public async void dealMsg(string name, WsRecvMsg recv)
         {
             Console.WriteLine(recv.msg.GetType());
@@ -104,6 +105,7 @@ namespace stmchat_backend
                 }
             }
         }
+        
         public async Task<List<WsSendMsg>> getUnreadMsg(string name)
         {
             var allunread = new List<WsSendMsg>();
@@ -121,6 +123,7 @@ namespace stmchat_backend
             unreads.Remove(name);
             return allunread;
         }
+        
         public WsSendMsg TransWsMsg(string name, WsRecvMsg rwsmsg)
         {
             SendMessage tgt = null;
@@ -133,10 +136,12 @@ namespace stmchat_backend
             };
             return swsmsg;
         }
+        
         public SendMessage TransMsg(string name, RecvMessage tgt)
         {
             return new SendMessage();
         }
+
         public TextMsg TransMsg(string name, RTextMsg tgt)
         {
             Console.WriteLine("is text");
@@ -151,10 +156,12 @@ namespace stmchat_backend
 
             return msg;
         }
+        
         public SendMessage TransMsg(string name, RFileMsg tgt)
         {
             return new SendMessage();
         }
+
         public async void SendAll(List<JsonWebsocketWrapper<WsRecvMsg, WsSendMsg>> clo, WsSendMsg Message)
         {
             foreach (var item in clo)
@@ -168,6 +175,7 @@ namespace stmchat_backend
             var tgt = await _groups.AsQueryable().Where(o => o.name == groupname).FirstOrDefaultAsync();
             return tgt;
         }
+        
         public async void InsertChat(string chatlog, WsSendMsg sendMsg)
         {
             var flicker = Builders<ChatLog>.Filter.Eq("id", chatlog);
@@ -175,6 +183,7 @@ namespace stmchat_backend
 
             await _chatlog.UpdateOneAsync(flicker, update);
         }
+
         public async Task<List<WsSendMsg>> getGroupMsg(string logid, int num)
         {
 
@@ -182,6 +191,7 @@ namespace stmchat_backend
             var res = msgs.TakeLast(num).ToList();
             return res;//粪代码
         }
+
         public async Task<WsSendMsg> getMsg(string logid, string msgid)
         {
 
@@ -189,10 +199,9 @@ namespace stmchat_backend
             return msg;
 
         }
+
         public async void insert()
         {
-
-
             var res = new ChatLog() { id = ObjectId.GenerateNewId().ToString(), messages = new List<WsSendMsg>() };
             var m1 = new WsSendMsg()
             {
@@ -237,7 +246,6 @@ namespace stmchat_backend
             res.messages.Add(m2);
             res.messages.Add(m3);
             await _chatlog.InsertOneAsync(res);
-
         }
     }
 }
