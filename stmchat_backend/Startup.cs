@@ -119,7 +119,7 @@ namespace stmchat_backend
                 var scanUsernameResult = pathReg.Match(context.Request.Path.Value);
                 if (scanUsernameResult.Success)
                 {
-                    var username = scanUsernameResult.Captures[1].Value;
+                    var username = scanUsernameResult.Captures[0].Value;
                     var websocket = await context.WebSockets.AcceptWebSocketAsync();
                     ChatService _chatservice;
                     using (var scope = context.RequestServices.CreateScope())
@@ -167,9 +167,12 @@ namespace stmchat_backend
             registry.RegisterType<RTextMsg>();
             registry.RegisterType<RImageMsg>();
             registry.RegisterType<RFileMsg>();
+            registry.RegisterType<RForwardMsg>();
             registry.DiscriminatorPolicy = DiscriminatorPolicy.Always;
 
             options.IgnoreNullValues = true;
+            options.AllowTrailingCommas = true;
+            options.ReadCommentHandling = JsonCommentHandling.Skip;
         }
         static readonly Regex pathReg = new Regex("^/ws/([^/]+)$");
     }
