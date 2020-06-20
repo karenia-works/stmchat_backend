@@ -23,6 +23,7 @@ using System.Collections;
 using stmchat_backend.Models.Settings;
 
 using MongoDB.Driver.Linq;
+using Microsoft.Extensions.Logging;
 
 namespace stmchat_backend
 {
@@ -33,17 +34,21 @@ namespace stmchat_backend
         public Dictionary<string, Dictionary<string, int>> MsgNotReadMap;//人，群
         public IMongoCollection<ChatLog> _chatlog;
         private IMongoCollection<ChatGroup> _groups;
+        private IMongoCollection<Profile> profiles;
         private IMongoDatabase database;
+        private ILogger<ChatService> logger;
 
-        public ChatService(IDbSettings settings)
+        public ChatService(IDbSettings settings, ILogger<ChatService> logger)
         {
 
             var client = new MongoClient(settings.DbConnection);
-            var _database = client.GetDatabase(settings.DbName);
-            _chatlog = _database.GetCollection<ChatLog>(settings.ChatLogCollectionName);
-            _groups = _database.GetCollection<ChatGroup>(settings.ChatGroupCollectionName);
+            database = client.GetDatabase(settings.DbName);
+            _chatlog = database.GetCollection<ChatLog>(settings.ChatLogCollectionName);
+            _groups = database.GetCollection<ChatGroup>(settings.ChatGroupCollectionName);
+            this.profiles = database.GetCollection<Profile>(settings.ProfileCollectionName);
             WsCastMap = new Dictionary<string, JsonWebsocketWrapper<WsRecvMsg, WsSendMsg>>();
             MsgNotReadMap = new Dictionary<string, Dictionary<string, int>>();
+            this.logger = logger;
         }
 
         public async Task<JsonWebsocketWrapper<WsRecvMsg, WsSendMsg>> Addsocket(String name, WebSocket webSocket, JsonSerializerOptions jsonSerializer)
@@ -60,22 +65,33 @@ namespace stmchat_backend
                     await tgt.SendMessage(item);
                 }
             }
+            {
+                var unreadMsg = await GetAllUnreadCountOfUser(name);
+                await tgt.SendMessage(new WsSendUnreadCountMsg() { items = unreadMsg });
+            }
             tgt.Messages.Subscribe(
-                          (msg) => { DealMsg(name, msg); },
-                           (err) => { Console.WriteLine("err: {0}", err); },
-                           () => { WsCastMap.Remove(name); });
+                (msg) => { DealMsg(name, msg); },
+                (err) => { Console.WriteLine("err: {0}", err); },
+                () => { WsCastMap.Remove(name); });
             return tgt;
         }
 
         public async void DealMsg(string name, WsRecvMsg recv)
         {
-            if (recv is WsRecvChatMsg)
+            try
             {
-                await DealMsg(name, recv as WsRecvChatMsg);
+                if (recv is WsRecvChatMsg)
+                {
+                    await DealMsg(name, recv as WsRecvChatMsg);
+                }
+                else if (recv is WsRecvReadPositionMsg)
+                {
+                    await ProcessReadPositionMessage(name, recv as WsRecvReadPositionMsg);
+                }
             }
-            else if (recv is WsRecvReadPositionMsg)
+            catch (Exception e)
             {
-                await ProcessReadPositionMessage(name, recv as WsRecvReadPositionMsg);
+                this.logger.LogWarning(new EventId(), e, "Error when processing message");
             }
         }
 
@@ -277,11 +293,35 @@ namespace stmchat_backend
                   new FilterDefinitionBuilder<ChatGroup>().Where(group => group.name == groupId),
                   new UpdateDefinitionBuilder<ChatGroup>().Max((group) => group.UserLatestRead[userId], messageId));
 
+            ObjectId lastMessage = group.UserLatestRead[userId];
+
             var count = await this.database.GetCollection<SendMessage>(group.chatlog).CountDocumentsAsync(
-                new FilterDefinitionBuilder<SendMessage>().Where(msg => msg.id.CompareTo(messageId.ToString()) > 0)
+                new FilterDefinitionBuilder<SendMessage>().Where(msg => msg.id.CompareTo(lastMessage.ToString()) > 0)
             );
 
-            return (count, group.UserLatestRead[userId]);
+            return (count, lastMessage);
+        }
+
+        private async Task<Dictionary<string, UnreadProperty>> GetAllUnreadCountOfUser(string userId)
+        {
+            var user = await this.profiles.AsQueryable().SingleAsync(p => p.Username == userId);
+            var res = new Dictionary<string, UnreadProperty>();
+
+            // TODO: Silly O(n) client side trick. Is it possible to perform totally inside server?
+            // (possibly not.)
+            foreach (var g in user.Groups)
+            {
+                var group = await this._groups.AsQueryable().Where(group => group.name == g).SingleAsync();
+                ObjectId lastMessage = group.UserLatestRead[userId];
+
+                var count = await this.database.GetCollection<SendMessage>(group.chatlog).CountDocumentsAsync(
+                    new FilterDefinitionBuilder<SendMessage>().Where(msg => msg.id.CompareTo(lastMessage.ToString()) > 0)
+                );
+
+                res.Add(g, new UnreadProperty() { count = (int)count, maxMessage = lastMessage });
+            }
+
+            return res;
         }
     }
 }
