@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Reactive.Subjects;
 using System.Text.Json;
-
+using Microsoft.Extensions.Logging;
 
 namespace stmchat_backend.Helpers
 {
@@ -16,16 +16,19 @@ namespace stmchat_backend.Helpers
         public JsonWebsocketWrapper(
             WebSocket socket,
             JsonSerializerOptions serializerOptions = null,
-            int defaultBufferSize = 8192)
+            int defaultBufferSize = 8192,
+            ILogger<JsonWebsocketWrapper<TRecvMessage, TSendMessage>> logger = null)
         {
             this.socket = socket;
             this.serializerOptions = serializerOptions;
             this.recvBuffer = new byte[defaultBufferSize];
+            this.logger = logger;
         }
 
         readonly WebSocket socket;
         readonly CancellationToken closeToken = new CancellationToken();
         readonly JsonSerializerOptions serializerOptions;
+        ILogger<JsonWebsocketWrapper<TRecvMessage, TSendMessage>> logger;
 
         byte[] recvBuffer;
 
@@ -54,6 +57,8 @@ namespace stmchat_backend.Helpers
                         this.recvBuffer.Length - writtenBytes), this.closeToken);
                 }
                 writtenBytes += result.Count;
+
+                this.logger?.LogInformation($"Received message with {writtenBytes} bytes.");
 
                 switch (result.MessageType)
                 {
