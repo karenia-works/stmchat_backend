@@ -23,6 +23,7 @@ using System.Collections;
 using stmchat_backend.Models.Settings;
 
 using MongoDB.Driver.Linq;
+using Microsoft.Extensions.Logging;
 
 namespace stmchat_backend
 {
@@ -33,16 +34,23 @@ namespace stmchat_backend
         public Dictionary<string, Dictionary<string, int>> MsgNotReadMap;//人，群
         public IMongoCollection<ChatLog> _chatlog;
         private IMongoCollection<ChatGroup> _groups;
-        public ChatService(IDbSettings settings)
+        private IMongoCollection<Profile> profiles;
+        private IMongoDatabase database;
+        private ILogger<ChatService> logger;
+
+        public ChatService(IDbSettings settings, ILogger<ChatService> logger)
         {
 
             var client = new MongoClient(settings.DbConnection);
-            var _database = client.GetDatabase(settings.DbName);
-            _chatlog = _database.GetCollection<ChatLog>(settings.ChatLogCollectionName);
-            _groups = _database.GetCollection<ChatGroup>(settings.ChatGroupCollectionName);
+            database = client.GetDatabase(settings.DbName);
+            _chatlog = database.GetCollection<ChatLog>(settings.ChatLogCollectionName);
+            _groups = database.GetCollection<ChatGroup>(settings.ChatGroupCollectionName);
+            this.profiles = database.GetCollection<Profile>(settings.ProfileCollectionName);
             WsCastMap = new Dictionary<string, JsonWebsocketWrapper<WsRecvMsg, WsSendMsg>>();
             MsgNotReadMap = new Dictionary<string, Dictionary<string, int>>();
+            this.logger = logger;
         }
+
         public async Task<JsonWebsocketWrapper<WsRecvMsg, WsSendMsg>> Addsocket(String name, WebSocket webSocket, JsonSerializerOptions jsonSerializer)
         {
 
@@ -57,15 +65,37 @@ namespace stmchat_backend
                     await tgt.SendMessage(item);
                 }
             }
+            {
+                var unreadMsg = await GetAllUnreadCountOfUser(name);
+                await tgt.SendMessage(new WsSendUnreadCountMsg() { items = unreadMsg });
+            }
             tgt.Messages.Subscribe(
-                          (msg) => { DealMsg(name, msg); },
-                           (err) => { Console.WriteLine("err: {0}", err); },
-                           () => { WsCastMap.Remove(name); });
+                (msg) => { DealMsg(name, msg); },
+                (err) => { Console.WriteLine("err: {0}", err); },
+                () => { WsCastMap.Remove(name); });
             return tgt;
-
-
         }
+
         public async void DealMsg(string name, WsRecvMsg recv)
+        {
+            try
+            {
+                if (recv is WsRecvChatMsg)
+                {
+                    await DealMsg(name, recv as WsRecvChatMsg);
+                }
+                else if (recv is WsRecvReadPositionMsg)
+                {
+                    await ProcessReadPositionMessage(name, recv as WsRecvReadPositionMsg);
+                }
+            }
+            catch (Exception e)
+            {
+                this.logger.LogWarning(new EventId(), e, "Error when processing message");
+            }
+        }
+
+        public async Task DealMsg(string name, WsRecvChatMsg recv)
         {
             Console.WriteLine(recv.msg.GetType());
 
@@ -105,9 +135,9 @@ namespace stmchat_backend
             }
         }
 
-        public async Task<List<WsSendMsg>> getUnreadMsg(string name)
+        public async Task<List<WsSendChatMsg>> getUnreadMsg(string name)
         {
-            var allunread = new List<WsSendMsg>();
+            var allunread = new List<WsSendChatMsg>();
             if (MsgNotReadMap.ContainsKey(name) == false)
             {
                 MsgNotReadMap.Add(name, new Dictionary<string, int>());
@@ -122,12 +152,12 @@ namespace stmchat_backend
             unreads.Remove(name);
             return allunread;
         }
-        public WsSendMsg ToSendWsMsg(string name, WsRecvMsg recvMsg)
+        public WsSendChatMsg ToSendWsMsg(string name, WsRecvChatMsg recvMsg)
         {
             SendMessage tgt = null;
             if (recvMsg.msg.GetType() == typeof(RTextMsg))
                 tgt = ToSendMsg(name, recvMsg.msg as RTextMsg);
-            var swsmsg = new WsSendMsg()
+            var swsmsg = new WsSendChatMsg()
             {
                 chatId = recvMsg.chatId,
                 msg = tgt
@@ -156,7 +186,8 @@ namespace stmchat_backend
         {
             return new SendMessage();
         }
-        public async void SendAll(List<JsonWebsocketWrapper<WsRecvMsg, WsSendMsg>> clo, WsSendMsg Message)
+
+        public async void SendAll(List<JsonWebsocketWrapper<WsRecvChatMsg, WsSendChatMsg>> clo, WsSendChatMsg Message)
         {
             foreach (var item in clo)
             {
@@ -169,21 +200,24 @@ namespace stmchat_backend
             var tgt = await _groups.AsQueryable().Where(o => o.name == groupname).FirstOrDefaultAsync();
             return tgt;
         }
-        public async void InsertChat(string chatlog, WsSendMsg sendMsg)
+
+        public async void InsertChat(string chatlog, WsSendChatMsg sendMsg)
         {
             var flicker = Builders<ChatLog>.Filter.Eq("id", chatlog);
             var update = Builders<ChatLog>.Update.Push(o => o.messages, sendMsg);
 
             await _chatlog.UpdateOneAsync(flicker, update);
         }
-        public async Task<List<WsSendMsg>> getGroupMsg(string logid, int num)
+
+        public async Task<List<WsSendChatMsg>> getGroupMsg(string logid, int num)
         {
 
             var msgs = await _chatlog.AsQueryable().Where(o => o.id == logid).SelectMany(o => o.messages).ToListAsync();
             var res = msgs.TakeLast(num).ToList();
             return res;//粪代码
         }
-        public async Task<WsSendMsg> getMsg(string logid, string msgid)
+
+        public async Task<WsSendChatMsg> getMsg(string logid, string msgid)
         {
 
             var msg = await _chatlog.AsQueryable().Where(o => o.id == logid).SelectMany(o => o.messages).Where(o => o.msg.id == msgid).FirstOrDefaultAsync();
@@ -192,10 +226,8 @@ namespace stmchat_backend
         }
         public async void InsertTestMsg()
         {
-
-
-            var res = new ChatLog() { id = ObjectId.GenerateNewId().ToString(), messages = new List<WsSendMsg>() };
-            var m1 = new WsSendMsg()
+            var res = new ChatLog() { id = ObjectId.GenerateNewId().ToString(), messages = new List<WsSendChatMsg>() };
+            var m1 = new WsSendChatMsg()
             {
                 chatId = ObjectId.GenerateNewId().ToString(),
                 msg = new TextMsg()
@@ -208,7 +240,7 @@ namespace stmchat_backend
                     text = "i am a text"
                 }
             };
-            var m2 = new WsSendMsg()
+            var m2 = new WsSendChatMsg()
             {
                 chatId = ObjectId.GenerateNewId().ToString(),
                 msg = new TextMsg()
@@ -221,7 +253,7 @@ namespace stmchat_backend
                     text = "text fuck"
                 }
             };
-            var m3 = new WsSendMsg()
+            var m3 = new WsSendChatMsg()
             {
                 chatId = ObjectId.GenerateNewId().ToString(),
                 msg = new TextMsg()
@@ -238,7 +270,58 @@ namespace stmchat_backend
             res.messages.Add(m2);
             res.messages.Add(m3);
             await _chatlog.InsertOneAsync(res);
+        }
 
+        private async Task ProcessReadPositionMessage(string username, WsRecvReadPositionMsg msg)
+        {
+            var (count, id) = await UpdateAndCountUnreadMessage(msg.chatId, username, new ObjectId(msg.msgId));
+            if (this.WsCastMap.TryGetValue(username, out var websocketWrapper))
+            {
+                await websocketWrapper.SendMessage(new WsSendUnreadCountMsg()
+                {
+                    items = new Dictionary<string, UnreadProperty>()
+                    {
+                        [msg.chatId] = new UnreadProperty() { count = (int)count, maxMessage = id }
+                    }
+                });
+            }
+        }
+
+        private async Task<(long, ObjectId)> UpdateAndCountUnreadMessage(string groupId, string userId, ObjectId messageId)
+        {
+            var group = await this._groups.FindOneAndUpdateAsync(
+                  new FilterDefinitionBuilder<ChatGroup>().Where(group => group.name == groupId),
+                  new UpdateDefinitionBuilder<ChatGroup>().Max((group) => group.UserLatestRead[userId], messageId));
+
+            ObjectId lastMessage = group.UserLatestRead[userId];
+
+            var count = await this.database.GetCollection<SendMessage>(group.chatlog).CountDocumentsAsync(
+                new FilterDefinitionBuilder<SendMessage>().Where(msg => msg.id.CompareTo(lastMessage.ToString()) > 0)
+            );
+
+            return (count, lastMessage);
+        }
+
+        private async Task<Dictionary<string, UnreadProperty>> GetAllUnreadCountOfUser(string userId)
+        {
+            var user = await this.profiles.AsQueryable().SingleAsync(p => p.Username == userId);
+            var res = new Dictionary<string, UnreadProperty>();
+
+            // TODO: Silly O(n) client side trick. Is it possible to perform totally inside server?
+            // (possibly not.)
+            foreach (var g in user.Groups)
+            {
+                var group = await this._groups.AsQueryable().Where(group => group.name == g).SingleAsync();
+                ObjectId lastMessage = group.UserLatestRead[userId];
+
+                var count = await this.database.GetCollection<SendMessage>(group.chatlog).CountDocumentsAsync(
+                    new FilterDefinitionBuilder<SendMessage>().Where(msg => msg.id.CompareTo(lastMessage.ToString()) > 0)
+                );
+
+                res.Add(g, new UnreadProperty() { count = (int)count, maxMessage = lastMessage });
+            }
+
+            return res;
         }
     }
 }

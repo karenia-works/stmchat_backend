@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Attributes;
+using System.Text.Json.Serialization;
 
 namespace stmchat_backend.Models
 {
@@ -23,6 +24,7 @@ namespace stmchat_backend.Models
         [BsonRepresentation(BsonType.ObjectId)]
         public string chatlog { get; set; }//一一对应的聊天记录
 
-
+        [JsonIgnore]
+        public Dictionary<string, ObjectId> UserLatestRead { get; set; }
     }
 }
