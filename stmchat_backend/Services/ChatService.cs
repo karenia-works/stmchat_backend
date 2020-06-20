@@ -66,7 +66,20 @@ namespace stmchat_backend
                            () => { WsCastMap.Remove(name); });
             return tgt;
         }
+
         public async void DealMsg(string name, WsRecvMsg recv)
+        {
+            if (recv is WsRecvChatMsg)
+            {
+                await DealMsg(name, recv as WsRecvChatMsg);
+            }
+            else if (recv is WsRecvReadPositionMsg)
+            {
+                await ProcessReadPositionMessage(name, recv as WsRecvReadPositionMsg);
+            }
+        }
+
+        public async Task DealMsg(string name, WsRecvChatMsg recv)
         {
             Console.WriteLine(recv.msg.GetType());
 
@@ -106,9 +119,9 @@ namespace stmchat_backend
             }
         }
 
-        public async Task<List<WsSendMsg>> getUnreadMsg(string name)
+        public async Task<List<WsSendChatMsg>> getUnreadMsg(string name)
         {
-            var allunread = new List<WsSendMsg>();
+            var allunread = new List<WsSendChatMsg>();
             if (MsgNotReadMap.ContainsKey(name) == false)
             {
                 MsgNotReadMap.Add(name, new Dictionary<string, int>());
@@ -123,12 +136,12 @@ namespace stmchat_backend
             unreads.Remove(name);
             return allunread;
         }
-        public WsSendMsg ToSendWsMsg(string name, WsRecvMsg recvMsg)
+        public WsSendChatMsg ToSendWsMsg(string name, WsRecvChatMsg recvMsg)
         {
             SendMessage tgt = null;
             if (recvMsg.msg.GetType() == typeof(RTextMsg))
                 tgt = ToSendMsg(name, recvMsg.msg as RTextMsg);
-            var swsmsg = new WsSendMsg()
+            var swsmsg = new WsSendChatMsg()
             {
                 chatId = recvMsg.chatId,
                 msg = tgt
@@ -158,7 +171,7 @@ namespace stmchat_backend
             return new SendMessage();
         }
 
-        public async void SendAll(List<JsonWebsocketWrapper<WsRecvMsg, WsSendMsg>> clo, WsSendMsg Message)
+        public async void SendAll(List<JsonWebsocketWrapper<WsRecvChatMsg, WsSendChatMsg>> clo, WsSendChatMsg Message)
         {
             foreach (var item in clo)
             {
@@ -172,7 +185,7 @@ namespace stmchat_backend
             return tgt;
         }
 
-        public async void InsertChat(string chatlog, WsSendMsg sendMsg)
+        public async void InsertChat(string chatlog, WsSendChatMsg sendMsg)
         {
             var flicker = Builders<ChatLog>.Filter.Eq("id", chatlog);
             var update = Builders<ChatLog>.Update.Push(o => o.messages, sendMsg);
@@ -180,7 +193,7 @@ namespace stmchat_backend
             await _chatlog.UpdateOneAsync(flicker, update);
         }
 
-        public async Task<List<WsSendMsg>> getGroupMsg(string logid, int num)
+        public async Task<List<WsSendChatMsg>> getGroupMsg(string logid, int num)
         {
 
             var msgs = await _chatlog.AsQueryable().Where(o => o.id == logid).SelectMany(o => o.messages).ToListAsync();
@@ -188,7 +201,7 @@ namespace stmchat_backend
             return res;//粪代码
         }
 
-        public async Task<WsSendMsg> getMsg(string logid, string msgid)
+        public async Task<WsSendChatMsg> getMsg(string logid, string msgid)
         {
 
             var msg = await _chatlog.AsQueryable().Where(o => o.id == logid).SelectMany(o => o.messages).Where(o => o.msg.id == msgid).FirstOrDefaultAsync();
@@ -197,8 +210,8 @@ namespace stmchat_backend
         }
         public async void InsertTestMsg()
         {
-            var res = new ChatLog() { id = ObjectId.GenerateNewId().ToString(), messages = new List<WsSendMsg>() };
-            var m1 = new WsSendMsg()
+            var res = new ChatLog() { id = ObjectId.GenerateNewId().ToString(), messages = new List<WsSendChatMsg>() };
+            var m1 = new WsSendChatMsg()
             {
                 chatId = ObjectId.GenerateNewId().ToString(),
                 msg = new TextMsg()
@@ -211,7 +224,7 @@ namespace stmchat_backend
                     text = "i am a text"
                 }
             };
-            var m2 = new WsSendMsg()
+            var m2 = new WsSendChatMsg()
             {
                 chatId = ObjectId.GenerateNewId().ToString(),
                 msg = new TextMsg()
@@ -224,7 +237,7 @@ namespace stmchat_backend
                     text = "text fuck"
                 }
             };
-            var m3 = new WsSendMsg()
+            var m3 = new WsSendChatMsg()
             {
                 chatId = ObjectId.GenerateNewId().ToString(),
                 msg = new TextMsg()
@@ -243,9 +256,9 @@ namespace stmchat_backend
             await _chatlog.InsertOneAsync(res);
         }
 
-        private async void ProcessReadPositionMessage(string username)
+        private async Task ProcessReadPositionMessage(string username, WsRecvReadPositionMsg msg)
         {
-
+            var count = await UpdateAndCountUnreadMessage(msg.chatId, username, new ObjectId(msg.msgId));
         }
 
         private async Task<long> UpdateAndCountUnreadMessage(string groupId, string userId, ObjectId messageId)

@@ -15,7 +15,7 @@ namespace stmchat_backend
         [BsonRepresentation(BsonType.ObjectId)]
 
         public string id { get; set; }
-        public List<WsSendMsg> messages { get; set; }
+        public List<WsSendChatMsg> messages { get; set; }
 
     }
 }

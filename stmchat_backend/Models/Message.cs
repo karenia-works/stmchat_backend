@@ -6,6 +6,7 @@ using System.Text;
 using Dahomey.Json;
 using Dahomey.Json.Attributes;
 using System.Text.Json;
+using System.Collections.Generic;
 
 namespace stmchat_backend.Models
 {
@@ -90,18 +91,50 @@ namespace stmchat_backend.Models
         public string fromChatId { get; set; }
         public string fromMessageId { get; set; }
     }
-    public class WsSendMsg
+
+    public class WsSendMsg { }
+
+    [JsonDiscriminator("chat_s")]
+    public class WsSendChatMsg : WsSendMsg
     {
-        // [BsonRepresentation(BsonType.ObjectId)]
         public string chatId { get; set; }
         public SendMessage msg { get; set; }
     }
-    public class WsRecvMsg
+
+    [JsonDiscriminator("unread_s")]
+    public class WsSendUnreadCountMsg : WsSendMsg
+    {
+        public Dictionary<string, UnreadProperty> items { get; set; }
+    }
+
+    public struct UnreadProperty
+    {
+        public int count { get; set; }
+        public ObjectId maxMessage { get; set; }
+    }
+
+    [JsonDiscriminator("online_s")]
+    public class WsSendOnlineStatusMsg : WsSendMsg
+    {
+        public string userId { get; set; }
+        public bool online { get; set; }
+    }
+
+    public class WsRecvMsg { }
+
+    [JsonDiscriminator("chat")]
+    public class WsRecvChatMsg : WsRecvMsg
     {
         //  [BsonRepresentation(BsonType.ObjectId)]
         public string chatId { get; set; }
         public RecvMessage msg { get; set; }
     }
 
+    [JsonDiscriminator("read_position")]
+    public class WsRecvReadPositionMsg : WsRecvMsg
+    {
+        public string chatId { get; set; }
+        public string msgId { get; set; }
+    }
 
 }

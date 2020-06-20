@@ -37,9 +37,9 @@ namespace stmchat_backend.Controllers
             userservice = _userservice;
         }
         [HttpGet("msgexp")]
-        public WsRecvMsg msgexp()
+        public WsRecvChatMsg msgexp()
         {
-            var tgt = new WsRecvMsg()
+            var tgt = new WsRecvChatMsg()
             {
                 chatId = "family",
                 msg = new RTextMsg()
@@ -123,8 +123,8 @@ namespace stmchat_backend.Controllers
         public List<ChatLog> what()
         {
             var into = new List<ChatLog>();
-            var res = new ChatLog() { id = "", messages = new List<WsSendMsg>() };
-            var m1 = new WsSendMsg()
+            var res = new ChatLog() { id = "", messages = new List<WsSendChatMsg>() };
+            var m1 = new WsSendChatMsg()
             {
                 chatId = ObjectId.GenerateNewId().ToString(),
                 msg = new TextMsg()
