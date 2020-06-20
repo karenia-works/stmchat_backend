@@ -258,24 +258,30 @@ namespace stmchat_backend
 
         private async Task ProcessReadPositionMessage(string username, WsRecvReadPositionMsg msg)
         {
-            var count = await UpdateAndCountUnreadMessage(msg.chatId, username, new ObjectId(msg.msgId));
+            var (count, id) = await UpdateAndCountUnreadMessage(msg.chatId, username, new ObjectId(msg.msgId));
+            if (this.WsCastMap.TryGetValue(username, out var websocketWrapper))
+            {
+                await websocketWrapper.SendMessage(new WsSendUnreadCountMsg()
+                {
+                    items = new Dictionary<string, UnreadProperty>()
+                    {
+                        [msg.chatId] = new UnreadProperty() { count = (int)count, maxMessage = id }
+                    }
+                });
+            }
         }
 
-        private async Task<long> UpdateAndCountUnreadMessage(string groupId, string userId, ObjectId messageId)
+        private async Task<(long, ObjectId)> UpdateAndCountUnreadMessage(string groupId, string userId, ObjectId messageId)
         {
-            await this._groups.FindOneAndUpdateAsync(
-                new FilterDefinitionBuilder<ChatGroup>().Where(group => group.name == groupId),
-                new UpdateDefinitionBuilder<ChatGroup>().Max((group) => group.UserLatestRead[userId], messageId));
-
-            var group = await this._groups.Find(
-                new FilterDefinitionBuilder<ChatGroup>().Where(group => group.name == groupId))
-                .SingleAsync();
+            var group = await this._groups.FindOneAndUpdateAsync(
+                  new FilterDefinitionBuilder<ChatGroup>().Where(group => group.name == groupId),
+                  new UpdateDefinitionBuilder<ChatGroup>().Max((group) => group.UserLatestRead[userId], messageId));
 
             var count = await this.database.GetCollection<SendMessage>(group.chatlog).CountDocumentsAsync(
                 new FilterDefinitionBuilder<SendMessage>().Where(msg => msg.id.CompareTo(messageId.ToString()) > 0)
             );
 
-            return count;
+            return (count, group.UserLatestRead[userId]);
         }
     }
 }
