@@ -33,18 +33,19 @@ namespace stmchat_backend
         public Dictionary<string, Dictionary<string, int>> notreadmap;//人，群
         public IMongoCollection<ChatLog> _chatlog;
         private IMongoCollection<ChatGroup> _groups;
+        private IMongoDatabase database;
 
         public ChatService(IDbSettings settings)
         {
 
             var client = new MongoClient(settings.DbConnection);
-            var _database = client.GetDatabase(settings.DbName);
-            _chatlog = _database.GetCollection<ChatLog>(settings.ChatLogCollectionName);
-            _groups = _database.GetCollection<ChatGroup>(settings.ChatGroupCollectionName);
+            database = client.GetDatabase(settings.DbName);
+            _chatlog = database.GetCollection<ChatLog>(settings.ChatLogCollectionName);
+            _groups = database.GetCollection<ChatGroup>(settings.ChatGroupCollectionName);
             Wsmap = new Dictionary<string, JsonWebsocketWrapper<WsRecvMsg, WsSendMsg>>();
             notreadmap = new Dictionary<string, Dictionary<string, int>>();
         }
-        
+
         public async Task<JsonWebsocketWrapper<WsRecvMsg, WsSendMsg>> Addsocket(String name, WebSocket webSocket, JsonSerializerOptions jsonSerializer)
         {
 
@@ -65,7 +66,7 @@ namespace stmchat_backend
                            () => { Wsmap.Remove(name); });
             return tgt;
         }
-        
+
         public async void dealMsg(string name, WsRecvMsg recv)
         {
             Console.WriteLine(recv.msg.GetType());
@@ -105,7 +106,7 @@ namespace stmchat_backend
                 }
             }
         }
-        
+
         public async Task<List<WsSendMsg>> getUnreadMsg(string name)
         {
             var allunread = new List<WsSendMsg>();
@@ -123,7 +124,7 @@ namespace stmchat_backend
             unreads.Remove(name);
             return allunread;
         }
-        
+
         public WsSendMsg TransWsMsg(string name, WsRecvMsg rwsmsg)
         {
             SendMessage tgt = null;
@@ -136,7 +137,7 @@ namespace stmchat_backend
             };
             return swsmsg;
         }
-        
+
         public SendMessage TransMsg(string name, RecvMessage tgt)
         {
             return new SendMessage();
@@ -156,7 +157,7 @@ namespace stmchat_backend
 
             return msg;
         }
-        
+
         public SendMessage TransMsg(string name, RFileMsg tgt)
         {
             return new SendMessage();
@@ -175,7 +176,7 @@ namespace stmchat_backend
             var tgt = await _groups.AsQueryable().Where(o => o.name == groupname).FirstOrDefaultAsync();
             return tgt;
         }
-        
+
         public async void InsertChat(string chatlog, WsSendMsg sendMsg)
         {
             var flicker = Builders<ChatLog>.Filter.Eq("id", chatlog);
@@ -246,6 +247,28 @@ namespace stmchat_backend
             res.messages.Add(m2);
             res.messages.Add(m3);
             await _chatlog.InsertOneAsync(res);
+        }
+
+        private async void ProcessReadPositionMessage(string username)
+        {
+
+        }
+
+        private async Task<long> UpdateAndCountUnreadMessage(string groupId, string userId, ObjectId messageId)
+        {
+            await this._groups.FindOneAndUpdateAsync(
+                new FilterDefinitionBuilder<ChatGroup>().Where(group => group.name == groupId),
+                new UpdateDefinitionBuilder<ChatGroup>().Max((group) => group.UserLatestRead[userId], messageId));
+
+            var group = await this._groups.Find(
+                new FilterDefinitionBuilder<ChatGroup>().Where(group => group.name == groupId))
+                .SingleAsync();
+
+            var count = await this.database.GetCollection<SendMessage>(group.chatlog).CountDocumentsAsync(
+                new FilterDefinitionBuilder<SendMessage>().Where(msg => msg.id.CompareTo(messageId.ToString()) > 0)
+            );
+
+            return count;
         }
     }
 }
