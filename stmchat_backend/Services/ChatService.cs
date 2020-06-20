@@ -28,9 +28,9 @@ namespace stmchat_backend
 {
     public class ChatService
     {
-        public Dictionary<string, JsonWebsocketWrapper<WsRecvMsg, WsSendMsg>> Wsmap;
+        public Dictionary<string, JsonWebsocketWrapper<WsRecvMsg, WsSendMsg>> WsCastMap;
         public Dictionary<string, List<string>> Groupmap;
-        public Dictionary<string, Dictionary<string, int>> notreadmap;//人，群
+        public Dictionary<string, Dictionary<string, int>> MsgNotReadMap;//人，群
         public IMongoCollection<ChatLog> _chatlog;
         private IMongoCollection<ChatGroup> _groups;
         public ChatService(IDbSettings settings)
@@ -40,15 +40,15 @@ namespace stmchat_backend
             var _database = client.GetDatabase(settings.DbName);
             _chatlog = _database.GetCollection<ChatLog>(settings.ChatLogCollectionName);
             _groups = _database.GetCollection<ChatGroup>(settings.ChatGroupCollectionName);
-            Wsmap = new Dictionary<string, JsonWebsocketWrapper<WsRecvMsg, WsSendMsg>>();
-            notreadmap = new Dictionary<string, Dictionary<string, int>>();
+            WsCastMap = new Dictionary<string, JsonWebsocketWrapper<WsRecvMsg, WsSendMsg>>();
+            MsgNotReadMap = new Dictionary<string, Dictionary<string, int>>();
         }
         public async Task<JsonWebsocketWrapper<WsRecvMsg, WsSendMsg>> Addsocket(String name, WebSocket webSocket, JsonSerializerOptions jsonSerializer)
         {
 
             var tgt = new JsonWebsocketWrapper<WsRecvMsg, WsSendMsg>(webSocket, jsonSerializer);
 
-            Wsmap.Add(name, tgt);
+            WsCastMap.Add(name, tgt);
             var unread = await getUnreadMsg(name);
             if (unread.Count != 0)
             {
@@ -58,14 +58,14 @@ namespace stmchat_backend
                 }
             }
             tgt.Messages.Subscribe(
-                          (msg) => { dealMsg(name, msg); },
+                          (msg) => { DealMsg(name, msg); },
                            (err) => { Console.WriteLine("err: {0}", err); },
-                           () => { Wsmap.Remove(name); });
+                           () => { WsCastMap.Remove(name); });
             return tgt;
 
 
         }
-        public async void dealMsg(string name, WsRecvMsg recv)
+        public async void DealMsg(string name, WsRecvMsg recv)
         {
             Console.WriteLine(recv.msg.GetType());
 
@@ -74,20 +74,20 @@ namespace stmchat_backend
             var groupname = group.chatlog;
             var members = group.members;
             var logid = group.chatlog;
-            var msg = TransWsMsg(name, recv);
+            var msg = ToSendWsMsg(name, recv);
 
             InsertChat(logid, msg);
             foreach (var men in members)
             {
-                if (Wsmap.ContainsKey(men))
+                if (WsCastMap.ContainsKey(men))
                 {
-                    await Wsmap[men].SendMessage(msg);
+                    await WsCastMap[men].SendMessage(msg);
                 }
                 else
                 {
-                    if (notreadmap.ContainsKey(men))
+                    if (MsgNotReadMap.ContainsKey(men))
                     {
-                        var tmpgroup = notreadmap[men];
+                        var tmpgroup = MsgNotReadMap[men];
                         if (tmpgroup.ContainsKey(groupname))
                         {
                             tmpgroup[groupname]++;
@@ -99,20 +99,21 @@ namespace stmchat_backend
                     {
                         var tmpgroup = new Dictionary<string, int>();
                         tmpgroup.Add(groupname, 1);
-                        notreadmap.Add(men, tmpgroup);
+                        MsgNotReadMap.Add(men, tmpgroup);
                     }
                 }
             }
         }
+
         public async Task<List<WsSendMsg>> getUnreadMsg(string name)
         {
             var allunread = new List<WsSendMsg>();
-            if (notreadmap.ContainsKey(name) == false)
+            if (MsgNotReadMap.ContainsKey(name) == false)
             {
-                notreadmap.Add(name, new Dictionary<string, int>());
+                MsgNotReadMap.Add(name, new Dictionary<string, int>());
             }
 
-            var unreads = notreadmap[name];
+            var unreads = MsgNotReadMap[name];
             foreach (var item in unreads)
             {
                 if (item.Value != 0)
@@ -121,23 +122,23 @@ namespace stmchat_backend
             unreads.Remove(name);
             return allunread;
         }
-        public WsSendMsg TransWsMsg(string name, WsRecvMsg rwsmsg)
+        public WsSendMsg ToSendWsMsg(string name, WsRecvMsg recvMsg)
         {
             SendMessage tgt = null;
-            if (rwsmsg.msg.GetType() == typeof(RTextMsg))
-                tgt = TransMsg(name, rwsmsg.msg as RTextMsg);
+            if (recvMsg.msg.GetType() == typeof(RTextMsg))
+                tgt = ToSendMsg(name, recvMsg.msg as RTextMsg);
             var swsmsg = new WsSendMsg()
             {
-                chatId = rwsmsg.chatId,
+                chatId = recvMsg.chatId,
                 msg = tgt
             };
             return swsmsg;
         }
-        public SendMessage TransMsg(string name, RecvMessage tgt)
+        public SendMessage ToSendMsg(string name, RecvMessage tgt)
         {
             return new SendMessage();
         }
-        public TextMsg TransMsg(string name, RTextMsg tgt)
+        public TextMsg ToSendMsg(string name, RTextMsg tgt)
         {
             Console.WriteLine("is text");
             var msg = new TextMsg()
@@ -151,7 +152,7 @@ namespace stmchat_backend
 
             return msg;
         }
-        public SendMessage TransMsg(string name, RFileMsg tgt)
+        public SendMessage ToSendMsg(string name, RFileMsg tgt)
         {
             return new SendMessage();
         }
@@ -189,7 +190,7 @@ namespace stmchat_backend
             return msg;
 
         }
-        public async void insert()
+        public async void InsertTestMsg()
         {
 
 
