@@ -12,7 +12,7 @@ namespace stmchat_backend.Services
 {
     public class UserService
     {
-        private readonly IMongoCollection<User> _users;
+        public IMongoCollection<User> _users;
 
         public UserService(IDbSettings settings)
         {

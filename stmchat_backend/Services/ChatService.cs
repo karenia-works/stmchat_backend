@@ -37,7 +37,7 @@ namespace stmchat_backend
         public IMongoCollection<ChatLog> _chatlog;
         private IMongoCollection<ChatGroup> _groups;
         private IMongoCollection<Profile> profiles;
-        private IMongoDatabase database;
+        public IMongoDatabase database;
         private ILogger<ChatService> logger;
         private Dictionary<string, (IDisposable, IDisposable)> SubscriptionMap;
 
@@ -76,6 +76,10 @@ namespace stmchat_backend
                 {
                     var (allunread, unreadMsg) = await GetAllUnreadCountOfUser(name);
                     await tgt.SendMessage(new WsSendUnreadCountMsg() { items = unreadMsg });
+                    foreach (var item in allunread)
+                    {
+                        await tgt.SendMessage(item);
+                    }
                 }
                 catch (Exception e)
                 {
@@ -199,7 +203,7 @@ namespace stmchat_backend
         }
         public TextMsg ToSendMsg(string name, RTextMsg tgt)
         {
-            Console.WriteLine("is text");
+
             var msg = new TextMsg()
             {
                 id = ObjectId.GenerateNewId().ToString(),
@@ -278,9 +282,9 @@ namespace stmchat_backend
                 ObjectId lastMessage = group.UserLatestRead[userId];
                 var groupLogCollection = this.database.GetCollection<WsSendChatMsg>(g);
                 var count = await groupLogCollection.CountDocumentsAsync(
-                    new FilterDefinitionBuilder<WsSendChatMsg>().Where(msg => msg.id.CompareTo(lastMessage.ToString()) > 0)
+                    new FilterDefinitionBuilder<WsSendChatMsg>().Where(msg => msg.msg.id.CompareTo(lastMessage.ToString()) > 0)
                 );
-                var msgs = await groupLogCollection.AsQueryable().Where(msgs => msgs.id.CompareTo(lastMessage.ToString()) > 0).ToListAsync();
+                var msgs = await groupLogCollection.AsQueryable().Where(msgs => msgs.msg.id.CompareTo(lastMessage.ToString()) > 0).ToListAsync();
                 unreadmsgs.AddRange(msgs);
                 res.Add(g, new UnreadProperty() { count = (int)count, maxMessage = lastMessage });
             }
@@ -299,9 +303,9 @@ namespace stmchat_backend
                 ObjectId lastMessage = group.UserLatestRead[userId];
                 var groupLogCollection = this.database.GetCollection<WsSendChatMsg>(g);
                 var count = await groupLogCollection.CountDocumentsAsync(
-                    new FilterDefinitionBuilder<WsSendChatMsg>().Where(msg => msg.id.CompareTo(lastMessage.ToString()) > 0)
+                    new FilterDefinitionBuilder<WsSendChatMsg>().Where(msg => msg.msg.id.CompareTo(lastMessage.ToString()) > 0)
                 );
-                var msgs = await groupLogCollection.AsQueryable().Where(msgs => msgs.id.CompareTo(lastMessage.ToString()) > 0).ToListAsync();
+                var msgs = await groupLogCollection.AsQueryable().Where(msgs => msgs.msg.id.CompareTo(lastMessage.ToString()) > 0).ToListAsync();
                 unreadmsgs.AddRange(msgs);
                 res.Add(g, new UnreadProperty() { count = (int)count, maxMessage = lastMessage });
             }

@@ -34,6 +34,7 @@ namespace stmchat_backend.Services
             }
 
             await _groups.InsertOneAsync(creating);
+            database.CreateCollection(creating.name);
             return creating;
         }
 
@@ -57,6 +58,7 @@ namespace stmchat_backend.Services
             {
                 return null;
             }
+            group.members.Add(user);
             group.UserLatestRead.Add(user, ObjectId.GenerateNewId());
 
 
@@ -119,7 +121,8 @@ namespace stmchat_backend.Services
                     id = ObjectId.GenerateNewId().ToString(),
                     name = passby + "+" + owner,
                     owner = owner,
-                    members = new List<string>()
+                    members = new List<string>(),
+                    UserLatestRead = new Dictionary<string, ObjectId>()
 
                 };
                 chat.UserLatestRead.Add(owner, ObjectId.GenerateNewId());

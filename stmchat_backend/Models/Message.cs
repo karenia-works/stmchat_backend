@@ -97,6 +97,8 @@ namespace stmchat_backend.Models
     public class WsSendMsg
     {
         // HACK: ID 只是用来调试的时候追踪来往消息的，没有任何实质作用
+        [BsonId]
+        [BsonRepresentation(BsonType.ObjectId)]
         public string? id { get; set; }
         public string? replyTo { get; set; }
     }

@@ -64,7 +64,7 @@ namespace stmchat_backend.Controllers
                 Groups = new List<string>(),
                 Friends = new List<string>()
             };
-            ms_wang.Groups.Add("kruodis");
+            ms_wang.Groups.Add("family");
             var ms_yang = new Profile()
             {
                 Username = "yang",
@@ -116,9 +116,17 @@ namespace stmchat_backend.Controllers
         [HttpDelete("killall")]
         public String killall()
         {
-            groupservice._chatlogs.DeleteMany(Builders<ChatLog>.Filter.Empty);
+            var db = chatservice.database;
+
+
+            var groupnames = groupservice._groups.AsQueryable().Select(o => o.name);
+            foreach (var item in groupnames)
+            {
+                db.DropCollection(item);
+            }
             groupservice._groups.DeleteMany(Builders<ChatGroup>.Filter.Empty);
             profileservice._profile.DeleteMany(Builders<Profile>.Filter.Empty);
+            userservice._users.DeleteMany(Builders<User>.Filter.Empty);
 
             return "hahahahaha";
         }
