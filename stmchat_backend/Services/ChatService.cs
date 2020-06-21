@@ -31,6 +31,7 @@ namespace stmchat_backend
     public class ChatService
     {
         public Dictionary<string, JsonWebsocketWrapper<WsRecvMsg, WsSendMsg>> WsCastMap;
+
         public Dictionary<string, List<string>> Groupmap;
         public Dictionary<string, Dictionary<string, int>> MsgNotReadMap;//人，群
         public IMongoCollection<ChatLog> _chatlog;
@@ -38,6 +39,8 @@ namespace stmchat_backend
         private IMongoCollection<Profile> profiles;
         private IMongoDatabase database;
         private ILogger<ChatService> logger;
+
+        private Dictionary<string, (IDisposable, IDisposable)> SubscriptionMap;
 
         public ChatService(IDbSettings settings, ILogger<ChatService> logger)
         {
@@ -49,6 +52,7 @@ namespace stmchat_backend
             this.profiles = database.GetCollection<Profile>(settings.ProfileCollectionName);
             WsCastMap = new Dictionary<string, JsonWebsocketWrapper<WsRecvMsg, WsSendMsg>>();
             MsgNotReadMap = new Dictionary<string, Dictionary<string, int>>();
+            SubscriptionMap = new Dictionary<string, (IDisposable, IDisposable)>();
             this.logger = logger;
         }
 
@@ -74,19 +78,37 @@ namespace stmchat_backend
                 }
             }
             {
-                // var unreadMsg = await GetAllUnreadCountOfUser(name);
-                // await tgt.SendMessage(new WsSendUnreadCountMsg() { items = unreadMsg });
+                try
+                {
+                    var unreadMsg = await GetAllUnreadCountOfUser(name);
+                    await tgt.SendMessage(new WsSendUnreadCountMsg() { items = unreadMsg });
+                }
+                catch (Exception e)
+                {
+                    this.SendErrorMessage(name, e);
+                }
             }
-            tgt.Messages.Subscribe(
+
+            var msgSub = tgt.Messages.Subscribe(
                 (msg) => { DealMsg(name, msg); },
-                (err) => { Console.WriteLine("err: {0}", err); this.SendErrorMessage(name, err); },
+                (err) =>
+                {
+                    Console.WriteLine("err: {0}", err);
+                    this.SendErrorMessage(name, err);
+                    this.OnUserGoingOffline(name);
+                },
                 () => { this.OnUserGoingOffline(name); });
+            var errSub = tgt.Errors.Subscribe((e) => { this.SendErrorMessage(name, e); });
+
+            this.SubscriptionMap.Add(name, (msgSub, errSub));
+
             return tgt;
         }
 
         public async void OnUserGoingOffline(string username)
         {
             WsCastMap.Remove(username);
+            this.SubscriptionMap.Remove(username);
             logger.LogInformation($"User {username} goes offline");
         }
 

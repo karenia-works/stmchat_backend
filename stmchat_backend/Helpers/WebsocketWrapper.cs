@@ -33,6 +33,7 @@ namespace stmchat_backend.Helpers
         byte[] recvBuffer;
 
         public Subject<TRecvMessage> Messages { get; } = new Subject<TRecvMessage>();
+        public Subject<Exception> Errors { get; } = new Subject<Exception>();
 
         protected void DoubleRecvCapacity()
         {
@@ -74,7 +75,7 @@ namespace stmchat_backend.Helpers
                             this.Messages.OnNext(message);
                             break;
                         case WebSocketMessageType.Binary:
-                            this.Messages.OnError(new UnexpectedBinaryMessageException());
+                            this.Errors.OnNext(new UnexpectedBinaryMessageException());
                             break;
                         case WebSocketMessageType.Close:
                             this.Messages.OnCompleted();
@@ -83,7 +84,7 @@ namespace stmchat_backend.Helpers
                 }
                 catch (Exception e)
                 {
-                    this.Messages.OnError(e);
+                    this.Errors.OnNext(e);
                 }
             }
         }
