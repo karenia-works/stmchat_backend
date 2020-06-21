@@ -136,9 +136,9 @@ namespace stmchat_backend
                         var ws = await _chatservice.Addsocket(username, websocket, jsonoption);
                         await ws.WaitUntilClose();
                     }
-                    catch (ChatService.UserAlreadyConnectedException e)
+                    catch (ChatService.UserAlreadyConnectedException)
                     {
-                        await websocket.CloseAsync(WebSocketCloseStatus.EndpointUnavailable, e.ToString(), CancellationToken.None);
+                        await websocket.CloseAsync(WebSocketCloseStatus.EndpointUnavailable, "User is already connected", CancellationToken.None);
                         return;
                     }
                     catch (Exception e)
