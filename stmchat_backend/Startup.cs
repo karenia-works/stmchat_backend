@@ -136,7 +136,12 @@ namespace stmchat_backend
                         var ws = await _chatservice.Addsocket(username, websocket, jsonoption);
                         await ws.WaitUntilClose();
                     }
-                    catch (Exception e) { Console.WriteLine(e); return; }
+                    catch (Exception e)
+                    {
+                        _chatservice.OnUserGoingOffline(username);
+                        Console.WriteLine(e);
+                        return;
+                    }
                 }
                 else
                 {
@@ -175,6 +180,7 @@ namespace stmchat_backend
             registry.RegisterType<WsSendChatMsg>();
             registry.RegisterType<WsSendOnlineStatusMsg>();
             registry.RegisterType<WsSendUnreadCountMsg>();
+            registry.RegisterType<WsSendErrMsg>();
             registry.RegisterType<WsRecvChatMsg>();
             registry.RegisterType<WsRecvReadPositionMsg>();
             registry.DiscriminatorPolicy = DiscriminatorPolicy.Always;

@@ -92,7 +92,14 @@ namespace stmchat_backend.Models
         public string fromMessageId { get; set; }
     }
 
-    public class WsSendMsg { }
+#nullable enable
+    public class WsSendMsg
+    {
+        // HACK: ID 只是用来调试的时候追踪来往消息的，没有任何实质作用
+        public string? id { get; set; }
+        public string? replyTo { get; set; }
+    }
+#nullable restore
 
     [JsonDiscriminator("chat_s")]
     public class WsSendChatMsg : WsSendMsg
@@ -120,7 +127,19 @@ namespace stmchat_backend.Models
         public bool online { get; set; }
     }
 
-    public class WsRecvMsg { }
+    [JsonDiscriminator("err_s")]
+    public class WsSendErrMsg : WsSendMsg
+    {
+        public String error { get; set; }
+    }
+
+#nullable enable
+    public class WsRecvMsg
+    {
+        public string? id { get; set; }
+        public string? replyTo { get; set; }
+    }
+#nullable restore
 
     [JsonDiscriminator("chat")]
     public class WsRecvChatMsg : WsRecvMsg

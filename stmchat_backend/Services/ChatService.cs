@@ -79,32 +79,49 @@ namespace stmchat_backend
             }
             tgt.Messages.Subscribe(
                 (msg) => { DealMsg(name, msg); },
-                (err) => { Console.WriteLine("err: {0}", err); },
-                () => { WsCastMap.Remove(name); this.OnUserGoingOffline(name); });
+                (err) => { Console.WriteLine("err: {0}", err); this.SendErrorMessage(name, err); },
+                () => { this.OnUserGoingOffline(name); });
             return tgt;
         }
 
-        private async void OnUserGoingOffline(string username)
+        public async void OnUserGoingOffline(string username)
         {
+            WsCastMap.Remove(username);
             logger.LogInformation($"User {username} goes offline");
+        }
+
+        public async void SendErrorMessage(string username, Exception error, WsSendMsg sourceMessage = null)
+        {
+            await this.WsCastMap[username].SendMessage(new WsSendErrMsg()
+            {
+                replyTo = sourceMessage?.id,
+                error = error.ToString(),
+                id = ObjectId.GenerateNewId().ToString(),
+            });
         }
 
         public async void DealMsg(string name, WsRecvMsg recv)
         {
             try
             {
-                if (recv is WsRecvChatMsg)
+                if (recv is WsRecvChatMsg msg0)
                 {
-                    await DealMsg(name, recv as WsRecvChatMsg);
+                    await DealMsg(name, msg0);
                 }
-                else if (recv is WsRecvReadPositionMsg)
+                else if (recv is WsRecvReadPositionMsg msg1)
                 {
-                    await ProcessReadPositionMessage(name, recv as WsRecvReadPositionMsg);
+                    await ProcessReadPositionMessage(name, msg1);
                 }
             }
             catch (Exception e)
             {
                 this.logger.LogWarning(new EventId(), e, "Error when processing message");
+                await this.WsCastMap[name].SendMessage(new WsSendErrMsg()
+                {
+                    replyTo = recv.id,
+                    error = e.ToString(),
+                    id = ObjectId.GenerateNewId().ToString(),
+                });
             }
         }
 
@@ -292,6 +309,8 @@ namespace stmchat_backend
             {
                 await websocketWrapper.SendMessage(new WsSendUnreadCountMsg()
                 {
+                    id = ObjectId.GenerateNewId().ToString(),
+                    replyTo = msg.id,
                     items = new Dictionary<string, UnreadProperty>()
                     {
                         [msg.chatId] = new UnreadProperty() { count = (int)count, maxMessage = id }
@@ -303,8 +322,12 @@ namespace stmchat_backend
         private async Task<(long, ObjectId)> UpdateAndCountUnreadMessage(string groupId, string userId, ObjectId messageId)
         {
             var group = await this._groups.FindOneAndUpdateAsync(
-                  new FilterDefinitionBuilder<ChatGroup>().Where(group => group.name == groupId),
-                  new UpdateDefinitionBuilder<ChatGroup>().Max((group) => group.UserLatestRead[userId], messageId));
+                new FilterDefinitionBuilder<ChatGroup>().Where(group => group.name == groupId),
+                new UpdateDefinitionBuilder<ChatGroup>().Combine(new[]{
+                    new UpdateDefinitionBuilder<ChatGroup>().Set((group) => group.UserLatestRead[userId], messageId)
+                }),
+                new FindOneAndUpdateOptions<ChatGroup, ChatGroup>() { ReturnDocument = ReturnDocument.After }
+            );
 
             ObjectId lastMessage = group.UserLatestRead[userId];
 

@@ -97,7 +97,8 @@ namespace stmchat_backend.Controllers
                 isFriend = false,
                 owner = "wang",
                 describe = "wei are family",
-                members = new List<string>()
+                members = new List<string>(),
+                UserLatestRead = new Dictionary<string, ObjectId>(),
             };
             group1.members.Add("wang");
             await groupservice.MakeGroup(group1);

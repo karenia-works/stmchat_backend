@@ -45,45 +45,45 @@ namespace stmchat_backend.Helpers
         {
             while (true)
             {
-                if (this.socket.State == WebSocketState.Closed)
+                try
                 {
-                    this.Messages.OnCompleted();
-                    return;
-                }
-                var result = await this.socket.ReceiveAsync(new ArraySegment<byte>(recvBuffer), this.closeToken);
-                var writtenBytes = 0;
-                while (!result.EndOfMessage)
-                {
-                    writtenBytes += result.Count;
-                    this.DoubleRecvCapacity();
-                    result = await this.socket.ReceiveAsync(new ArraySegment<byte>(
-                        recvBuffer,
-                        writtenBytes,
-                        this.recvBuffer.Length - writtenBytes), this.closeToken);
-                }
-                writtenBytes += result.Count;
-
-                this.logger?.LogInformation($"Received message with {writtenBytes} bytes.");
-
-                switch (result.MessageType)
-                {
-                    case WebSocketMessageType.Text:
-                        try
-                        {
-                            var message = JsonSerializer.Deserialize<TRecvMessage>(new ArraySegment<byte>(this.recvBuffer, 0, writtenBytes), serializerOptions);
-                            this.Messages.OnNext(message);
-                        }
-                        catch (Exception e)
-                        {
-                            this.Messages.OnError(e);
-                        }
-                        break;
-                    case WebSocketMessageType.Binary:
-                        this.Messages.OnError(new UnexpectedBinaryMessageException());
-                        break;
-                    case WebSocketMessageType.Close:
+                    if (this.socket.State == WebSocketState.Closed)
+                    {
                         this.Messages.OnCompleted();
                         return;
+                    }
+                    var result = await this.socket.ReceiveAsync(new ArraySegment<byte>(recvBuffer), this.closeToken);
+                    var writtenBytes = 0;
+                    while (!result.EndOfMessage)
+                    {
+                        writtenBytes += result.Count;
+                        this.DoubleRecvCapacity();
+                        result = await this.socket.ReceiveAsync(new ArraySegment<byte>(
+                            recvBuffer,
+                            writtenBytes,
+                            this.recvBuffer.Length - writtenBytes), this.closeToken);
+                    }
+                    writtenBytes += result.Count;
+
+                    this.logger?.LogInformation($"Received message with {writtenBytes} bytes.");
+
+                    switch (result.MessageType)
+                    {
+                        case WebSocketMessageType.Text:
+                            var message = JsonSerializer.Deserialize<TRecvMessage>(new ArraySegment<byte>(this.recvBuffer, 0, writtenBytes), serializerOptions);
+                            this.Messages.OnNext(message);
+                            break;
+                        case WebSocketMessageType.Binary:
+                            this.Messages.OnError(new UnexpectedBinaryMessageException());
+                            break;
+                        case WebSocketMessageType.Close:
+                            this.Messages.OnCompleted();
+                            return;
+                    }
+                }
+                catch (Exception e)
+                {
+                    this.Messages.OnError(e);
                 }
             }
         }
