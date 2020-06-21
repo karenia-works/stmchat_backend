@@ -136,6 +136,11 @@ namespace stmchat_backend
                         var ws = await _chatservice.Addsocket(username, websocket, jsonoption);
                         await ws.WaitUntilClose();
                     }
+                    catch (ChatService.UserAlreadyConnectedException e)
+                    {
+                        await websocket.CloseAsync(WebSocketCloseStatus.EndpointUnavailable, e.ToString(), CancellationToken.None);
+                        return;
+                    }
                     catch (Exception e)
                     {
                         _chatservice.OnUserGoingOffline(username);
@@ -165,7 +170,7 @@ namespace stmchat_backend
         {
             options.Converters.Add(new ObjectIdConverter());
             options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-            
+
             options.SetupExtensions();
 
             DiscriminatorConventionRegistry registry = options.GetDiscriminatorConventionRegistry();

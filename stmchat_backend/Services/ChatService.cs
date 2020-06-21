@@ -56,6 +56,8 @@ namespace stmchat_backend
             this.logger = logger;
         }
 
+        public class UserAlreadyConnectedException : Exception { }
+
         public async Task<JsonWebsocketWrapper<WsRecvMsg, WsSendMsg>> Addsocket(String name, WebSocket webSocket, JsonSerializerOptions jsonSerializer)
         {
             var tgt = new JsonWebsocketWrapper<WsRecvMsg, WsSendMsg>(webSocket, jsonSerializer);
@@ -64,8 +66,7 @@ namespace stmchat_backend
             {
                 string message = $"WsCastMap already contains name {name}, please recheck!";
                 logger.LogWarning(message);
-                await webSocket.CloseAsync(WebSocketCloseStatus.EndpointUnavailable, message, CancellationToken.None);
-                throw new Exception();
+                throw new UserAlreadyConnectedException();
             }
             logger.LogInformation($"Added {name} into WsCastMap");
             //insert
