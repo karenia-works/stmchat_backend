@@ -12,11 +12,11 @@ namespace stmchat_backend.Services
     {
         public IMongoCollection<ChatGroup> _groups;
         public IMongoCollection<ChatLog> _chatlogs;
-
+        public IMongoDatabase database;
         public GroupService(IDbSettings settings)
         {
             var client = new MongoClient(settings.DbConnection);
-            var database = client.GetDatabase(settings.DbName);
+            database = client.GetDatabase(settings.DbName);
             _groups = database.GetCollection<ChatGroup>(settings.ChatGroupCollectionName);
             _chatlogs = database.GetCollection<ChatLog>(settings.ChatLogCollectionName);
         }
@@ -33,15 +33,7 @@ namespace stmchat_backend.Services
                 return null;
             }
 
-            var chatlogid = ObjectId.GenerateNewId().ToString();
-            creating.chatlog = chatlogid;
             await _groups.InsertOneAsync(creating);
-            var chatlogmake = new ChatLog()
-            {
-                id = chatlogid,
-                messages = new List<WsSendChatMsg>()
-            };
-            await _chatlogs.InsertOneAsync(chatlogmake);
             return creating;
         }
 
@@ -53,7 +45,7 @@ namespace stmchat_backend.Services
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<UpdateResult> AddGroup(string user, string groupName)
+        public async Task<ReplaceOneResult> AddGroup(string user, string groupName)
         {
             var group = await _groups
                 .AsQueryable()
@@ -65,11 +57,10 @@ namespace stmchat_backend.Services
             {
                 return null;
             }
+            group.UserLatestRead.Add(user, ObjectId.GenerateNewId());
 
-            var flicker = Builders<ChatGroup>.Filter.Eq(o => o.name, groupName);
-            var update = Builders<ChatGroup>.Update.Push(o => o.members, user);
 
-            return await _groups.UpdateOneAsync(flicker, update);
+            return await _groups.ReplaceOneAsync(o => o.name == groupName, group);
         }
 
         public async Task<DeleteResult> DeleteGroup(string groupName)
@@ -83,8 +74,23 @@ namespace stmchat_backend.Services
                 return null;
             }
 
-            await _chatlogs.DeleteOneAsync(o => o.id == group.chatlog);
+            await database.DropCollectionAsync(groupName);
             return await _groups.DeleteOneAsync(o => o.name == groupName);
+        }
+        public async Task<DeleteResult> DeleteFriend(string username, string friendname)
+        {
+            string g = null;
+            if (string.Compare(username, friendname) > 0)
+            {
+                g = username + "+" + friendname;
+            }
+            else
+            {
+                g = friendname + "+" + username;
+            }
+
+            await database.DropCollectionAsync(g);
+            return await _groups.DeleteOneAsync(o => o.name == g);
         }
         public async Task<string> MakeFriend(string owner, string passby)
         {
@@ -96,12 +102,14 @@ namespace stmchat_backend.Services
                     name = owner + "+" + passby,
                     owner = owner,
                     members = new List<string>(),
-                    isFriend = true
-
+                    isFriend = true,
+                    UserLatestRead = new Dictionary<string, ObjectId>()
                 };
-
+                chat.UserLatestRead.Add(owner, ObjectId.GenerateNewId());
+                chat.UserLatestRead.Add(passby, ObjectId.GenerateNewId());
                 chat.members.Add(owner);
                 chat.members.Add(passby);
+
                 await MakeGroup(chat);
             }
             else
@@ -114,7 +122,8 @@ namespace stmchat_backend.Services
                     members = new List<string>()
 
                 };
-
+                chat.UserLatestRead.Add(owner, ObjectId.GenerateNewId());
+                chat.UserLatestRead.Add(passby, ObjectId.GenerateNewId());
                 chat.members.Add(owner);
                 chat.members.Add(passby);
                 await MakeGroup(chat);

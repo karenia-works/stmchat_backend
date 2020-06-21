@@ -100,6 +100,7 @@ namespace stmchat_backend.Controllers
                 members = new List<string>(),
                 UserLatestRead = new Dictionary<string, ObjectId>(),
             };
+            group1.UserLatestRead.Add("wang", ObjectId.GenerateNewId());
             group1.members.Add("wang");
             await groupservice.MakeGroup(group1);
             await profileservice.AddUserGroup("he", "family");
@@ -118,6 +119,7 @@ namespace stmchat_backend.Controllers
             groupservice._chatlogs.DeleteMany(Builders<ChatLog>.Filter.Empty);
             groupservice._groups.DeleteMany(Builders<ChatGroup>.Filter.Empty);
             profileservice._profile.DeleteMany(Builders<Profile>.Filter.Empty);
+
             return "hahahahaha";
         }
         [HttpGet("what")]

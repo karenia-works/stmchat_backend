@@ -23,8 +23,6 @@ namespace stmchat_backend.Models
         [BsonElement("describ")]
         public string describe { get; set; }//群描述
         public List<String> members { get; set; }//群成员,存储username!!
-        [BsonRepresentation(BsonType.ObjectId)]
-        public string chatlog { get; set; }//一一对应的聊天记录
 
         [JsonIgnore]
         public Dictionary<string, ObjectId> UserLatestRead { get; set; }

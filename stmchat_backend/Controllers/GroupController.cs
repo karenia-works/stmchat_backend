@@ -32,10 +32,12 @@ namespace stmchat_backend.Controllers
 
         //[Authorize(IdentityServerConstants.LocalApi.PolicyName)]
         [HttpPost]
-        public async Task<string> MakeGroup([FromBody] ChatGroup tgt)
+        public async Task<string> MakeGroup(string owner, [FromBody] ChatGroup tgt)
         {
-            var user = User.Claims.Where(Clame => Clame.Type == "Name").FirstOrDefault();
-            tgt.owner = user.Value;
+            //var user = User.Claims.Where(Clame => Clame.Type == "Name").FirstOrDefault();
+            tgt.owner = owner;
+            tgt.UserLatestRead = new Dictionary<string, ObjectId>();
+            tgt.UserLatestRead.Add(owner, ObjectId.GenerateNewId());
             await groupservice.MakeGroup(tgt);
             return "ok";
         }
@@ -49,24 +51,24 @@ namespace stmchat_backend.Controllers
             return "ok";
         }
 
-        //[Authorize(IdentityServerConstants.LocalApi.PolicyName)]
-        [HttpPost("{user}/makefriend/{name}")]
-        public async Task<string> MakeFriend(string user, string name)
-        {
-            // var user = User.Claims.Where(Clame => Clame.Type == "Name").FirstOrDefault().Value;
+        // //[Authorize(IdentityServerConstants.LocalApi.PolicyName)]
+        // [HttpPost("{user}/makefriend/{name}")]
+        // public async Task<string> MakeFriend(string user, string name)
+        // {
+        //     // var user = User.Claims.Where(Clame => Clame.Type == "Name").FirstOrDefault().Value;
 
-            var chat = new ChatGroup()
-            {
-                id = ObjectId.GenerateNewId().ToString(),
-                name = name + user,
-                owner = user,
-                isFriend = false
-            };
-            chat.members.Add(name);
-            chat.members.Add(user);
-            await groupservice.MakeGroup(chat);
-            return "ok";
-        }
+        //     var chat = new ChatGroup()
+        //     {
+        //         id = ObjectId.GenerateNewId().ToString(),
+        //         name = name + user,
+        //         owner = user,
+        //         isFriend = false
+        //     };
+        //     chat.members.Add(name);
+        //     chat.members.Add(user);
+        //     await groupservice.MakeGroup(chat);
+        //     return "ok";
+        // }
 
         //test
     }

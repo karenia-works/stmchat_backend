@@ -176,6 +176,7 @@ namespace stmchat_backend.Controllers
                 return BadRequest("already not friend");
 
             var tem = await _service.DeleteUserFriend(username, friendname);
+            await _groupService.DeleteFriend(username, friendname);
             if (tem == null)
                 return BadRequest("delete friend error");
             return Ok();
