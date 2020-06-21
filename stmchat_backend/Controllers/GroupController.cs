@@ -25,9 +25,15 @@ namespace stmchat_backend.Controllers
         }
 
         [HttpGet("{name}")]
-        public async Task<ChatGroup> FindGroup(string name)
+        public async Task<IActionResult> FindGroup(string name)
         {
-            return await groupservice.FindGroup(name);
+            // YOUR API IS A HALL OF SHAME
+            // YOU GIVE REST A BAD NAME
+            // YOU SAID IT WORKS IN A RESTFUL WAY
+            // THEN YOUR ERRORS COME BACK AS 200 OK
+            var res = await groupservice.FindGroup(name);
+            if (res != null) return Ok(res);
+            else return NotFound();
         }
 
         //[Authorize(IdentityServerConstants.LocalApi.PolicyName)]
