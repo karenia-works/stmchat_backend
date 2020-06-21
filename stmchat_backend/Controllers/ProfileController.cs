@@ -46,15 +46,15 @@ namespace stmchat_backend.Controllers
         public async Task<IActionResult> GetProfile(string username)
         {
             var res = await _service.GetProfileByUsername(username);
-            if (_chatService.WsCastMap.ContainsKey(username))
-                res.state = true;
-            else
-                res.state = false;
             if (res == null)
             {
                 return NotFound();
             }
 
+            if (_chatService.WsCastMap.ContainsKey(username))
+                res.state = true;
+            else
+                res.state = false;
             return Ok(res);
         }
 
