@@ -130,29 +130,8 @@ namespace stmchat_backend.Controllers
 
             return "hahahahaha";
         }
-        [HttpGet("what")]
-        public List<ChatLog> what()
-        {
-            var into = new List<ChatLog>();
-            var res = new ChatLog() { id = "", messages = new List<WsSendChatMsg>() };
-            var m1 = new WsSendChatMsg()
-            {
-                chatId = ObjectId.GenerateNewId().ToString(),
-                msg = new TextMsg()
-                {
-                    sender = "wang",
-                    time = DateTime.Now,
-                    forwardFrom = "sssdd",
-                    replyTo = ObjectId.GenerateNewId().ToString()
-                }
-            };
-            res.messages.Add(m1);
 
-            into.Add(res);
-            into.Add(res);
-            return into;
 
-        }
     }
 
 

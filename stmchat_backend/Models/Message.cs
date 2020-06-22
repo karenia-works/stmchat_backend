@@ -19,9 +19,9 @@ namespace stmchat_backend.Models
         public string id { get; set; }
         public string sender { get; set; }
         public DateTime time { get; set; }
-        public string forwardFrom { get; set; }
+        public FowardProperty forwardFrom { get; set; }
         [BsonRepresentation(BsonType.ObjectId)]
-        public string replyTo { get; set; }
+        public SendMessage replyTo { get; set; }
 
 
     }

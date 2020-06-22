@@ -174,7 +174,7 @@ namespace stmchat_backend
             var group = await FindGroup(groupname);
 
             var members = group.members;
-            var msg = ToSendWsMsg(name, recv);
+            var msg = await ToSendWsMsg(name, recv);
             InsertChat(groupname, msg);
             foreach (var men in members)
             {
@@ -186,20 +186,40 @@ namespace stmchat_backend
             }
         }
 
-        public WsSendChatMsg ToSendWsMsg(string name, WsRecvChatMsg recvMsg)
+        public async Task<WsSendChatMsg> ToSendWsMsg(string name, WsRecvChatMsg recvMsg)
         {
             SendMessage tgt = null;
+            var swsmsg = new WsSendChatMsg();
             if (recvMsg.msg.GetType() == typeof(RTextMsg))
                 tgt = ToSendMsg(name, recvMsg.msg as RTextMsg);
             else if (recvMsg.msg.GetType() == typeof(RFileMsg))
                 tgt = ToSendMsg(name, recvMsg.msg as RFileMsg);
             else if (recvMsg.msg.GetType() == typeof(RImageMsg))
                 tgt = ToSendMsg(name, recvMsg.msg as RImageMsg);
-            var swsmsg = new WsSendChatMsg()
+            else if (recvMsg.msg.GetType() == typeof(RForwardMsg))
             {
-                chatId = recvMsg.chatId,
-                msg = tgt
-            };
+                var forwardmsg = await getMsg((recvMsg.msg as RForwardMsg).fromChatId, (recvMsg.msg as RForwardMsg).fromMessageId);
+                forwardmsg.replyTo = null;
+                forwardmsg.msg.sender = name;
+                tgt = forwardmsg.msg;
+                tgt.forwardFrom = new FowardProperty()
+                {
+                    username = forwardmsg.msg.sender,
+                    chatId = (recvMsg.msg as RForwardMsg).fromChatId,
+                    msgId = (recvMsg.msg as RForwardMsg).fromMessageId
+                };
+            }
+            if (recvMsg.replyTo != null)
+            {
+                var reply = await getMsg(recvMsg.chatId, recvMsg.replyTo);
+                tgt.replyTo = reply.msg;
+            }
+
+
+            swsmsg.chatId = recvMsg.chatId;
+            swsmsg.msg = tgt;
+
+
             return swsmsg;
         }
         public SendMessage ToSendMsg(string name, RecvMessage tgt)
@@ -248,6 +268,7 @@ namespace stmchat_backend
             };
             return msg;
         }
+
         public async void SendAll(List<JsonWebsocketWrapper<WsRecvChatMsg, WsSendChatMsg>> clo, WsSendChatMsg Message)
         {
             foreach (var item in clo)
@@ -354,25 +375,33 @@ namespace stmchat_backend
             await groupLogCollection.InsertOneAsync(sendMsg);
 
         }
-        public async Task<List<WsSendChatMsg>> getGroupMsg(int skip, int take, string groupname)
+        public async Task<List<WsSendChatMsg>> getGroupMsg(string basemsg, int take, string groupname, bool reverse)
         {
 
             var groupLogCollection = database.GetCollection<WsSendChatMsg>(groupname);
-            var msgs = await groupLogCollection.AsQueryable().OrderBy(o => o.id).Skip(skip).Take(take).ToListAsync();
-            return msgs;
+            if (!reverse)
+            {
+                var msgs = await groupLogCollection.AsQueryable().Where(o => o.msg.id.CompareTo(basemsg) > 0).OrderBy(o => o.msg.id).Take(take).ToListAsync();
+                return msgs;
+            }
+            else
+            {
+                var msgs = await groupLogCollection.AsQueryable().Where(o => o.msg.id.CompareTo(basemsg) < 0).OrderBy(o => o.msg.id).Take(take).ToListAsync();
+                return msgs;
+            }
         }
         public async Task<List<WsSendChatMsg>> getGroupMsg(string groupname)
         {
 
             var groupLogCollection = database.GetCollection<WsSendChatMsg>(groupname);
-            var msgs = await groupLogCollection.AsQueryable().OrderBy(o => o.id).ToListAsync();
+            var msgs = await groupLogCollection.AsQueryable().OrderBy(o => o.msg.id).ToListAsync();
             return msgs;
         }
         public async Task<WsSendChatMsg> getMsg(string groupname, string msgid)
         {
 
             var groupLogCollection = database.GetCollection<WsSendChatMsg>(groupname);
-            var msg = await groupLogCollection.AsQueryable().Where(o => o.id == msgid).FirstOrDefaultAsync();
+            var msg = await groupLogCollection.AsQueryable().Where(o => o.msg.id == msgid).FirstOrDefaultAsync();
             return msg;
 
         }
