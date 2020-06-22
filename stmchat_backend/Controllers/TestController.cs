@@ -140,7 +140,14 @@ namespace stmchat_backend.Controllers
         {
             return profileservice._profile.AsQueryable().ToList();
         }
-
+        [HttpDelete("clean/{name}")]
+        public string clean(string name)
+        {
+            var db = chatservice.database;
+            db.DropCollectionAsync(name);
+            db.CreateCollectionAsync(name);
+            return name + "clean";
+        }
 
     }
 

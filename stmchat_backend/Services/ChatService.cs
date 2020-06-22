@@ -200,10 +200,10 @@ namespace stmchat_backend
             {
                 var forwardmsg = await getMsg((recvMsg.msg as RForwardMsg).fromChatId, (recvMsg.msg as RForwardMsg).fromMessageId);
                 forwardmsg.replyTo = null;
-                forwardmsg.msg.sender = name;
                 tgt = forwardmsg.msg;
                 tgt.id = ObjectId.GenerateNewId().ToString();
                 tgt.time = DateTime.Now;
+                tgt.sender = name;
                 tgt.forwardFrom = new FowardProperty()
                 {
                     username = forwardmsg.msg.sender,
