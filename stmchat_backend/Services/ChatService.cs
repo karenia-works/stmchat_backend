@@ -203,13 +203,14 @@ namespace stmchat_backend
                 tgt = forwardmsg.msg;
                 tgt.id = ObjectId.GenerateNewId().ToString();
                 tgt.time = DateTime.Now;
-                tgt.sender = name;
                 tgt.forwardFrom = new FowardProperty()
                 {
                     username = forwardmsg.msg.sender,
                     chatId = (recvMsg.msg as RForwardMsg).fromChatId,
                     msgId = (recvMsg.msg as RForwardMsg).fromMessageId
                 };
+                tgt.sender = name;
+
             }
             if (recvMsg.replyTo != null)
             {
