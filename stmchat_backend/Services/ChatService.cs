@@ -132,12 +132,17 @@ namespace stmchat_backend
         }
         public async void SendErrorMessage(string username, Exception error, WsSendMsg sourceMessage = null)
         {
-            await this.WsCastMap[username].SendMessage(new WsSendErrMsg()
+            try
             {
-                replyTo = sourceMessage?.id,
-                error = error.ToString(),
-                id = ObjectId.GenerateNewId().ToString(),
-            });
+
+                await this.WsCastMap[username].SendMessage(new WsSendErrMsg()
+                {
+                    replyTo = sourceMessage?.id,
+                    error = error.ToString(),
+                    id = ObjectId.GenerateNewId().ToString(),
+                });
+            }
+            catch { }
         }
 
         public async void DealMsg(string name, WsRecvMsg recv)
