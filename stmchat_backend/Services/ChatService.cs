@@ -191,6 +191,10 @@ namespace stmchat_backend
             SendMessage tgt = null;
             if (recvMsg.msg.GetType() == typeof(RTextMsg))
                 tgt = ToSendMsg(name, recvMsg.msg as RTextMsg);
+            else if (recvMsg.msg.GetType() == typeof(RFileMsg))
+                tgt = ToSendMsg(name, recvMsg.msg as RFileMsg);
+            else if (recvMsg.msg.GetType() == typeof(RImageMsg))
+                tgt = ToSendMsg(name, recvMsg.msg as RImageMsg);
             var swsmsg = new WsSendChatMsg()
             {
                 chatId = recvMsg.chatId,
@@ -216,11 +220,34 @@ namespace stmchat_backend
 
             return msg;
         }
-        public SendMessage ToSendMsg(string name, RFileMsg tgt)
+        public FileMsg ToSendMsg(string name, RFileMsg tgt)
         {
-            return new SendMessage();
-        }
+            var msg = new FileMsg()
+            {
+                id = ObjectId.GenerateNewId().ToString(),
+                sender = name,
+                time = DateTime.Now,
+                file = tgt.file,
+                filename = tgt.filename,
+                caption = tgt.caption,
+                size = tgt.size
 
+            };
+
+            return msg;
+        }
+        public ImageMsg ToSendMsg(string name, RImageMsg tgt)
+        {
+            var msg = new ImageMsg()
+            {
+                id = ObjectId.GenerateNewId().ToString(),
+                sender = name,
+                time = DateTime.Now,
+                image = tgt.Image,
+                caption = tgt.Caption
+            };
+            return msg;
+        }
         public async void SendAll(List<JsonWebsocketWrapper<WsRecvChatMsg, WsSendChatMsg>> clo, WsSendChatMsg Message)
         {
             foreach (var item in clo)
@@ -327,14 +354,14 @@ namespace stmchat_backend
             await groupLogCollection.InsertOneAsync(sendMsg);
 
         }
-        public async Task<List<WsSendChatMsg>> getGroupMsg(int skip, int take, string groupname, int num)
+        public async Task<List<WsSendChatMsg>> getGroupMsg(int skip, int take, string groupname)
         {
 
             var groupLogCollection = database.GetCollection<WsSendChatMsg>(groupname);
             var msgs = await groupLogCollection.AsQueryable().OrderBy(o => o.id).Skip(skip).Take(take).ToListAsync();
             return msgs;
         }
-        public async Task<List<WsSendChatMsg>> getGroupMsg(string groupname, int num)
+        public async Task<List<WsSendChatMsg>> getGroupMsg(string groupname)
         {
 
             var groupLogCollection = database.GetCollection<WsSendChatMsg>(groupname);

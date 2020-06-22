@@ -47,11 +47,21 @@ namespace stmchat_backend
         public void ConfigureServices(IServiceCollection services)
         {
             // ID4
+            services.AddLocalApiAuthentication();
             services.AddIdentityServer()
                 .AddDeveloperSigningCredential()
                 .AddInMemoryClients(Config.GetClients())
                 .AddInMemoryApiResources(Config.GetApiResources()).AddResourceOwnerValidator<UserStore>();
+            services.AddAuthorization(option =>
+                 option.AddPolicy(
+                "user", policy =>
+                {
+                    policy.AddAuthenticationSchemes(IdentityServerConstants.LocalApi.AuthenticationScheme);
+                    policy.RequireAuthenticatedUser();
 
+                }
+                )
+            );
             // DB
             services.Configure<DbSettings>(
                 Configuration.GetSection(nameof(DbSettings))
@@ -98,9 +108,9 @@ namespace stmchat_backend
             app.UseRouting();
 
 
-            // app.UseIdentityServer();
-            // app.UseAuthentication();
-            // app.UseAuthorization();
+            app.UseIdentityServer();
+            app.UseAuthentication();
+            app.UseAuthorization();
 
             app.UseCors(policy =>
             {
