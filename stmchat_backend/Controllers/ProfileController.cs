@@ -29,8 +29,9 @@ namespace stmchat_backend.Controllers
 
         // 可能会因为用户名叫`me`而出错
         // 因此限制用户名至少为3位
+        [Authorize("user")]
         [HttpGet("me")]
-        [Authorize(IdentityServerConstants.LocalApi.PolicyName)]
+
         public async Task<IActionResult> Get()
         {
             var profilename = User
@@ -39,10 +40,14 @@ namespace stmchat_backend.Controllers
                 .FirstOrDefault()
                 .Value;
             var profile = await _service.GetProfileByUsername(profilename);
+            if (_chatService.WsCastMap.ContainsKey(profilename))
+                profile.state = true;
+            else
+                profile.state = false;
             return Ok(profile);
         }
 
-        [HttpGet("{username}")]
+        [HttpGet("test/{username}")]
         public async Task<IActionResult> GetProfile(string username)
         {
             var res = await _service.GetProfileByUsername(username);
