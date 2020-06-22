@@ -20,7 +20,7 @@ namespace stmchat_backend.Controllers
         {
             _chatService = chatService;
         }
-        [HttpGet("{groupName}?start={start_id}&limit={limit}&reverse={true|false}")]
+        [HttpGet()]
         public async Task<List<WsSendChatMsg>> getMsg(string groupName, string start_id, int limit, bool reverse)
         {
             return await _chatService.getGroupMsg(start_id, limit, groupName, reverse);
