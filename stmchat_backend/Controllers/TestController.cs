@@ -130,6 +130,16 @@ namespace stmchat_backend.Controllers
 
             return "hahahahaha";
         }
+        [HttpGet("showallgroup")]
+        public List<ChatGroup> allgroup()
+        {
+            return groupservice._groups.AsQueryable().ToList();
+        }
+        [HttpGet("showallprofile")]
+        public List<Profile> allprofile()
+        {
+            return profileservice._profile.AsQueryable().ToList();
+        }
 
 
     }
