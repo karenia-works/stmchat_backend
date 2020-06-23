@@ -217,9 +217,9 @@ namespace stmchat_backend
                 tgt.sender = name;
 
             }
-            if (recvMsg.replyTo != null)
+            if (recvMsg.msg.replyTo != null)
             {
-                var reply = await getMsg(recvMsg.chatId, recvMsg.replyTo);
+                var reply = await getMsg(recvMsg.chatId, recvMsg.msg.replyTo);
                 tgt.replyTo = reply.msg;
             }
 
