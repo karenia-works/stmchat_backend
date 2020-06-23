@@ -388,7 +388,7 @@ namespace stmchat_backend
                 var group = await this._groups.AsQueryable().Where(group => group.name == g).SingleAsync();
                 if (!group.UserLatestRead.TryGetValue(userId, out var lastUnread))
                 {
-                    await this._groups.UpdateOneAsync(g => g.id == group.id, Builders<ChatGroup>.Update.Set($"UserLastestRead.{user}", ObjectId.Empty));
+                    await this._groups.UpdateOneAsync(g => g.id == group.id, Builders<ChatGroup>.Update.Set($"UserLatestRead.{user}", ObjectId.Empty));
                     lastUnread = ObjectId.Empty;
                 }
                 var groupLogCollection = this.database.GetCollection<WsSendChatMsg>(g);
