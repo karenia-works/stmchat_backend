@@ -336,7 +336,11 @@ namespace stmchat_backend
             foreach (var g in user.Groups)
             {
                 var group = await this._groups.AsQueryable().Where(group => group.name == g).SingleAsync();
-                ObjectId lastMessage = group.UserLatestRead[userId];
+                if (!group.UserLatestRead.TryGetValue(userId, out var lastMessage))
+                {
+                    await this._groups.UpdateOneAsync(g => g.id == group.id, Builders<ChatGroup>.Update.Set($"UserLastestRead.{user}", ObjectId.Empty));
+                    lastMessage = ObjectId.Empty;
+                }
                 var groupLogCollection = this.database.GetCollection<WsSendChatMsg>(g);
                 var count = await groupLogCollection.CountDocumentsAsync(
                     new FilterDefinitionBuilder<WsSendChatMsg>().Where(msg => msg.msg.id.CompareTo(lastMessage.ToString()) > 0)
@@ -382,7 +386,11 @@ namespace stmchat_backend
             foreach (var g in user.Groups)
             {
                 var group = await this._groups.AsQueryable().Where(group => group.name == g).SingleAsync();
-                ObjectId lastUnread = group.UserLatestRead[userId];
+                if (!group.UserLatestRead.TryGetValue(userId, out var lastUnread))
+                {
+                    await this._groups.UpdateOneAsync(g => g.id == group.id, Builders<ChatGroup>.Update.Set($"UserLastestRead.{user}", ObjectId.Empty));
+                    lastUnread = ObjectId.Empty;
+                }
                 var groupLogCollection = this.database.GetCollection<WsSendChatMsg>(g);
                 var count = await groupLogCollection.CountDocumentsAsync(
                     new FilterDefinitionBuilder<WsSendChatMsg>().Where(msg => msg.msg.id.CompareTo(lastUnread.ToString()) > 0)
