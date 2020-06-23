@@ -20,10 +20,22 @@ namespace stmchat_backend.Controllers
         {
             _chatService = chatService;
         }
+
         [HttpGet()]
         public async Task<List<WsSendChatMsg>> getMsg(string groupName, string start_id, int limit, bool reverse)
         {
             return await _chatService.getGroupMsg(start_id, limit, groupName, reverse);
         }
+
+        [Authorize("user")]
+        [HttpGet("me/all")]
+        public async Task<List<Models.ChatListItem>> GetChatList()
+        {
+            var profilename = User.Claims.Where(claim => claim.Type == "Name")
+                .FirstOrDefault().Value;
+            return await _chatService.GetChatlistItems(profilename);
+        }
     }
+
+
 }

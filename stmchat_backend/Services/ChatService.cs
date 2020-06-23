@@ -370,6 +370,59 @@ namespace stmchat_backend
             return (unreadmsgs, res);
         }
 
+        public async Task<List<ChatListItem>> GetChatlistItems(string userId)
+        {
+            var user = await this.profiles.AsQueryable().SingleAsync(p => p.Username == userId);
+
+            var list = new List<ChatListItem>();
+
+            // TODO: Silly O(n) client side trick. Is it possible to perform totally inside server?
+            // (possibly not.)
+            foreach (var g in user.Groups)
+            {
+                var group = await this._groups.AsQueryable().Where(group => group.name == g).SingleAsync();
+                ObjectId lastUnread = group.UserLatestRead[userId];
+                var groupLogCollection = this.database.GetCollection<WsSendChatMsg>(g);
+                var count = await groupLogCollection.CountDocumentsAsync(
+                    new FilterDefinitionBuilder<WsSendChatMsg>().Where(msg => msg.msg.id.CompareTo(lastUnread.ToString()) > 0)
+                );
+                var lastMessage = await groupLogCollection.AsQueryable().OrderByDescending(x => x.id).FirstOrDefaultAsync();
+                list.Add(new ChatListItem()
+                {
+                    group = group,
+                    unreadCount = (int)count,
+                    message = lastMessage?.msg
+                });
+            }
+            foreach (var f in user.Friends)
+            {
+                string g = null;
+                if (String.Compare(user.Username, f) > 0)
+                {
+                    g = user.Username + "+" + f;
+                }
+                else if (String.Compare(user.Username, f) < 0)
+                {
+                    g = f + "+" + user.Username;
+                }
+                var group = await this._groups.AsQueryable().Where(group => group.name == g).SingleAsync();
+                ObjectId lastUnreadMessage = group.UserLatestRead[userId];
+                var groupLogCollection = this.database.GetCollection<WsSendChatMsg>(g);
+                var count = await groupLogCollection.CountDocumentsAsync(
+                    new FilterDefinitionBuilder<WsSendChatMsg>().Where(msg => msg.msg.id.CompareTo(lastUnreadMessage.ToString()) > 0)
+                );
+                var lastMessage = await groupLogCollection.AsQueryable().OrderByDescending(x => x.id).FirstOrDefaultAsync();
+                list.Add(new ChatListItem()
+                {
+                    group = group,
+                    unreadCount = (int)count,
+                    message = lastMessage?.msg
+                });
+            }
+
+            return list;
+        }
+
         //database process
         public async Task<ChatGroup> FindGroup(string groupname)
         {

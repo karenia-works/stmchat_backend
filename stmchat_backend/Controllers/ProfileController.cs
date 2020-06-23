@@ -96,6 +96,7 @@ namespace stmchat_backend.Controllers
             }
             return Ok(user);
         }
+
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] Profile profile)
         {
