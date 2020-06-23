@@ -356,7 +356,8 @@ namespace stmchat_backend
                 {
                     g = f + "+" + user.Username;
                 }
-                var group = await this._groups.AsQueryable().Where(group => group.name == g).SingleAsync();
+                var group = await this._groups.AsQueryable().Where(group => group.name == g).SingleOrDefaultAsync();
+                if (group == null) continue;
                 ObjectId lastMessage = group.UserLatestRead[userId];
                 var groupLogCollection = this.database.GetCollection<WsSendChatMsg>(g);
                 var count = await groupLogCollection.CountDocumentsAsync(
@@ -405,7 +406,8 @@ namespace stmchat_backend
                 {
                     g = f + "+" + user.Username;
                 }
-                var group = await this._groups.AsQueryable().Where(group => group.name == g).SingleAsync();
+                var group = await this._groups.AsQueryable().Where(group => group.name == g).SingleOrDefaultAsync();
+                if (group == null) continue;
                 ObjectId lastUnreadMessage = group.UserLatestRead[userId];
                 var groupLogCollection = this.database.GetCollection<WsSendChatMsg>(g);
                 var count = await groupLogCollection.CountDocumentsAsync(
