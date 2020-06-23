@@ -155,8 +155,12 @@ namespace stmchat_backend
                     {
                         _chatservice.OnUserGoingOffline(username);
                         Console.WriteLine(e);
-                        return;
                     }
+                    try
+                    {
+                        await websocket.CloseAsync(WebSocketCloseStatus.EndpointUnavailable, "User is already connected", CancellationToken.None);
+                    }
+                    catch { }
                 }
                 else
                 {

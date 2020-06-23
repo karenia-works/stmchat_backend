@@ -110,6 +110,7 @@ namespace stmchat_backend
         {
             WsCastMap.Remove(username);
             this.SubscriptionMap.Remove(username);
+
             logger.LogInformation($"User {username} goes offline");
         }
         public async void RemindFriend(bool state, string username)
@@ -134,7 +135,6 @@ namespace stmchat_backend
         {
             try
             {
-
                 await this.WsCastMap[username].SendMessage(new WsSendErrMsg()
                 {
                     replyTo = sourceMessage?.id,
@@ -142,7 +142,7 @@ namespace stmchat_backend
                     id = ObjectId.GenerateNewId().ToString(),
                 });
             }
-            catch { }
+            catch (WebSocketException) { this.OnUserGoingOffline(username); }
         }
 
         public async void DealMsg(string name, WsRecvMsg recv)
